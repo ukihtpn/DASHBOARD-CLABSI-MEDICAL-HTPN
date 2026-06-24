@@ -1,479 +1,802 @@
 <!DOCTYPE html>
-<html lang="ms">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CLABSI Surveillance HTPN 2026</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <style>
-    body { font-family:'Inter',sans-serif; background:#f1f5f9; }
-    .ward-card { background:#facc15; border-radius:2.5rem; padding:2.5rem; text-align:center; border-bottom:12px solid #ca8a04; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); transition:transform 0.2s; }
-    .ward-card:hover { transform:scale(1.05); }
-    .kpi-red    { background:linear-gradient(135deg,#ef4444,#b91c1c); }
-    .kpi-blue   { background:linear-gradient(135deg,#2563eb,#1e3a8a); }
-    .kpi-orange { background:linear-gradient(135deg,#f59e0b,#ea580c); }
-    .q-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #f1f5f9; font-size:12px; }
-    .q-row:last-child { border-bottom:none; }
-    @keyframes spin { to{transform:rotate(360deg);} }
-    .spin { animation:spin 1s linear infinite; }
-    @keyframes pdot { 0%,100%{opacity:1} 50%{opacity:.4} }
-    .pulse { animation:pdot 2s infinite; }
-    @media print {
-      * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; color-adjust:exact!important; }
-      #sidebar,#mobile-menu-btn,.no-print { display:none!important; }
-      body { background:white!important; margin:0; }
-      #app { display:flex!important; }
-      #main-content { padding:16px 24px!important; }
-      .kpi-red    { background:#ef4444!important; }
-      .kpi-blue   { background:#2563eb!important; }
-      .kpi-orange { background:#f59e0b!important; }
-      .ward-card  { background:#facc15!important; border-bottom:8px solid #ca8a04!important; box-shadow:none!important; padding:1.2rem!important; }
-      .kpi-grid { gap:10px!important; margin-bottom:14px!important; }
-      .ward-grid-wrap { gap:10px!important; margin-top:8px!important; }
-      #q-summary-grid { gap:8px!important; margin-bottom:14px!important; }
-      .kpi-grid,.ward-grid-wrap,#ward-grid,#ward-date-grid,
-      .print-card,#q-summary-grid { page-break-inside:avoid; break-inside:avoid; }
-      .print-card { box-shadow:none!important; border:1px solid #e2e8f0!important; margin-bottom:14px!important; padding:20px!important; border-radius:1rem!important; }
-      #trend-chart-wrap,#compliance-chart-wrap { height:220px!important; page-break-inside:avoid; break-inside:avoid; }
-      h1 { font-size:18px!important; margin-bottom:4px!important; }
-      h2 { font-size:13px!important; padding:12px 16px!important; border-radius:1rem!important; margin-bottom:12px!important; }
-      h3 { font-size:12px!important; margin-bottom:10px!important; }
-      #kpi-cases,#kpi-days,#kpi-rate { font-size:34px!important; }
-      footer { padding:8px 0!important; font-size:7px!important; }
-      #trend-chart-wrap { height:260px!important; }
-      #compliance-chart-wrap { height:220px!important; }
-      #days-section { page-break-before:always!important; break-before:page!important; }
-      #quarterly-section { page-break-before:always!important; break-before:page!important; }
-    }
-    @media (max-width:768px) { #sidebar{display:none!important;} #mobile-menu-btn{display:block!important;} #main-content{padding:20px 16px!important;} .kpi-grid{grid-template-columns:1fr!important;} .ward-grid-wrap{grid-template-columns:1fr 1fr!important;} }
+    *{box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;background:#f1f5f9;margin:0;}
+    #sidebar{width:260px;background:#020617;color:white;display:flex;flex-direction:column;padding:28px 20px;min-height:100vh;flex-shrink:0;overflow-y:auto;}
+    .dept-wrap{position:relative;margin-bottom:20px;}
+    .dept-wrap select{width:100%;padding:11px 34px 11px 13px;background:#1e293b;color:white;border:1px solid #334155;border-radius:12px;font-family:Inter,sans-serif;font-size:13px;font-weight:700;cursor:pointer;appearance:none;-webkit-appearance:none;}
+    .dept-wrap select:focus{outline:none;border-color:#4f46e5;}
+    .dept-wrap::after{content:'▾';position:absolute;right:11px;top:50%;transform:translateY(-50%);color:#64748b;pointer-events:none;}
+    /* Sidebar nav links */
+    .snav{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;color:#94a3b8;background:transparent;border:none;font-family:Inter,sans-serif;width:100%;text-align:left;transition:all .15s;}
+    .snav:hover{background:#1e293b;color:white;}
+    .snav.active{background:#1e3a8a;color:white;}
+    /* Top tab nav */
+    #tab-nav{display:flex;gap:6px;margin-bottom:28px;background:white;padding:6px;border-radius:18px;box-shadow:0 4px 12px rgba(0,0,0,.06);flex-wrap:wrap;}
+    .tab-btn{padding:9px 15px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.07em;border:none;border-radius:12px;cursor:pointer;font-family:Inter,sans-serif;transition:all .2s;color:#64748b;background:transparent;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+    .tab-btn.active{background:#4f46e5;color:white;box-shadow:0 6px 16px rgba(79,70,229,.3);}
+    .tab-btn:not(.active):hover{background:#f1f5f9;color:#334155;}
+    .tab-content{display:none;}
+    .tab-content.active{display:block;}
+    /* Cards */
+    .kpi-red{background:linear-gradient(135deg,#ef4444,#b91c1c);}
+    .kpi-blue{background:linear-gradient(135deg,#2563eb,#1e3a8a);}
+    .kpi-orange{background:linear-gradient(135deg,#f59e0b,#ea580c);}
+    .kpi-card{padding:28px;border-radius:2rem;color:white;box-shadow:0 20px 40px rgba(0,0,0,.18);border-bottom:8px solid rgba(0,0,0,.15);transition:transform .2s;}
+    .kpi-card:hover{transform:translateY(-4px);}
+    .ward-card{background:#facc15;border-radius:2.5rem;padding:2rem;text-align:center;border-bottom:10px solid #ca8a04;box-shadow:0 20px 40px -8px rgba(0,0,0,.2);transition:transform .2s;}
+    .ward-card:hover{transform:scale(1.04);}
+    .wtab{padding:8px 18px;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;font-family:Inter,sans-serif;transition:all .2s;color:#64748b;background:white;}
+    .wtab.aw{background:#0f172a;color:#facc15;border-color:#0f172a;}
+    .q-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px;}
+    .q-row:last-child{border-bottom:none;}
+    .fi{width:100%;padding:11px 14px;border:2px solid #e2e8f0;border-radius:12px;font-family:Inter,sans-serif;font-size:14px;transition:border .2s;}
+    .fi:focus{outline:none;border-color:#4f46e5;}
+    .fl{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#475569;margin-bottom:6px;display:block;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .spin{animation:spin 1s linear infinite;}
+    @keyframes pdot{0%,100%{opacity:1}50%{opacity:.4}}
+    .pulse{animation:pdot 2s infinite;}
+    #toast{position:fixed;bottom:28px;right:28px;background:#0f172a;color:white;padding:14px 22px;border-radius:14px;font-size:13px;font-weight:700;box-shadow:0 20px 40px rgba(0,0,0,.3);transform:translateY(80px);opacity:0;transition:all .3s;z-index:9999;}
+    #toast.show{transform:translateY(0);opacity:1;}
+    @media(max-width:768px){#sidebar{display:none!important;}#mobile-btn{display:flex!important;}#main-content{padding:20px 16px!important;}.kpi-grid{grid-template-columns:1fr!important;}.wgrid{grid-template-columns:1fr 1fr!important;}#tab-nav{overflow-x:auto;flex-wrap:nowrap!important;}}
+    @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}#sidebar,#mobile-btn,#tab-nav,.noprint{display:none!important;}body{background:white!important;}#app{display:block!important;}#main-content{padding:16px 24px!important;}.tab-content{display:block!important;}.kpi-red{background:#ef4444!important;}.kpi-blue{background:#2563eb!important;}.kpi-orange{background:#f59e0b!important;}.ward-card{background:#facc15!important;}}
   </style>
 </head>
 <body>
 
-<!-- LOADING -->
-<div id="loading-screen" style="position:fixed;inset:0;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:20px;">
-  <div style="width:48px;height:48px;border:4px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;" class="spin"></div>
-  <p style="font-size:11px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.2em">Sila Tunggu, Memuatkan Data...</p>
-</div>
+<!-- ═══ SPLASH SCREEN ═══ -->
+<div id="splash-screen" style="position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,#3b0a0a 0%,#1a0505 40%,#020617 100%);"></div>
+  <div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(220,38,38,.18) 0%,transparent 70%);"></div>
+  <canvas id="splash-stars" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
 
-<div style="display:none;min-height:100vh;display:flex;" id="app">
+  <div style="position:relative;z-index:2;text-align:center;padding:40px 20px;">
 
-  <!-- SIDEBAR -->
-  <aside id="sidebar" style="width:288px;background:#020617;color:white;display:flex;flex-direction:column;padding:32px 24px;min-height:100vh;flex-shrink:0;">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:48px;">
-      <div style="background:#dc2626;padding:10px;border-radius:16px;box-shadow:0 10px 30px rgba(220,38,38,.4);">
-        <svg width="24" height="24" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      </div>
-      <div>
-        <h2 style="font-size:22px;font-weight:900;letter-spacing:-0.5px;">CLABSI</h2>
-        <p style="font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.15em;">Monitoring 2026</p>
+    <!-- Row 1: Welcome to -->
+    <div class="sr" style="opacity:0;transform:translateY(20px);">
+      <p style="font-family:'Inter',sans-serif;font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.45em;margin-bottom:22px;">Welcome to</p>
+    </div>
+
+    <!-- Row 2: Logo + CLABSI TRACKER -->
+    <div class="sr" style="opacity:0;transform:translateY(20px);">
+      <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:12px;flex-wrap:wrap;">
+        <div style="width:52px;height:52px;background:linear-gradient(135deg,#dc2626,#991b1b);border-radius:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 30px rgba(220,38,38,.6),0 0 60px rgba(220,38,38,.2);">
+          <svg width="28" height="28" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h1 style="font-family:'Inter',sans-serif;font-size:clamp(32px,5.5vw,68px);font-weight:900;letter-spacing:-2px;line-height:1;margin:0;">
+          <span style="color:#ef4444;text-shadow:0 0 28px rgba(239,68,68,.7);">CLABSI</span>
+          <span style="color:white;"> TRACKER</span>
+        </h1>
       </div>
     </div>
-    <nav style="flex:1;display:flex;flex-direction:column;gap:20px;">
-      <button style="width:100%;display:flex;align-items:center;gap:12px;padding:16px;background:#4f46e5;border:none;border-radius:16px;color:white;font-family:Inter,sans-serif;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 20px 40px rgba(79,70,229,.3);">
-        <svg width="20" height="20" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-        Main Dashboard
-      </button>
-      <div style="padding:20px;background:#fbbf24;border-radius:24px;border:2px solid #f59e0b;box-shadow:0 20px 40px rgba(251,191,36,.3);">
-        <p style="font-size:11px;font-weight:900;color:#1e293b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Global Average</p>
-        <p style="font-size:18px;font-weight:900;color:#1e293b;font-style:italic;">&lt; 5.0 / 1000 Cath Days</p>
+
+    <!-- Row 3: PRO badge -->
+    <div class="sr" style="opacity:0;transform:translateY(20px);">
+      <div style="display:flex;justify-content:center;margin-bottom:24px;">
+        <span style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#1e293b;font-family:'Inter',sans-serif;font-size:14px;font-weight:900;letter-spacing:.3em;padding:6px 28px;border-radius:99px;box-shadow:0 0 24px rgba(245,158,11,.5);">PRO</span>
       </div>
-    </nav>
-    <div style="padding-top:24px;border-top:1px solid #1e293b;font-size:10px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.2em;text-align:center;">HTPN Infection Control</div>
+    </div>
+
+    <!-- Row 4: Divider -->
+    <div class="sr" style="opacity:0;transform:translateY(20px);">
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:24px;">
+        <div style="width:40px;height:1px;background:linear-gradient(to right,transparent,#f59e0b);"></div>
+        <div style="width:5px;height:5px;border-radius:50%;background:#f59e0b;box-shadow:0 0 8px #f59e0b;"></div>
+        <div style="width:40px;height:1px;background:linear-gradient(to left,transparent,#f59e0b);"></div>
+      </div>
+    </div>
+
+    <!-- Row 5: IPC Unit + Hospital -->
+    <div class="sr" style="opacity:0;transform:translateY(20px);">
+      <p style="font-family:'Inter',sans-serif;font-size:11px;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:.3em;margin-bottom:6px;">Infection Control Unit</p>
+      <p style="font-family:'Inter',sans-serif;font-size:17px;font-weight:700;color:white;margin-bottom:28px;">Hospital Tengku Permaisuri Norashikin, Kajang</p>
+    </div>
+
+    <!-- Row 6: Credits -->
+    <div class="sr" style="opacity:0;transform:translateY(20px);">
+      <p style="font-family:'Courier New',monospace;font-size:10px;color:#475569;margin-bottom:36px;line-height:1.8;">
+        &copy; 2026 &bull; Dr. Aneesa Tharek &bull; Dr. Marzilawati Abd Rahman<br>
+        IPC Unit &amp; Healthcare Intelligence Office HTPN
+      </p>
+    </div>
+
+    <!-- Row 7: ENTER button -->
+    <div class="sr" style="opacity:0;transform:translateY(20px);">
+      <button onclick="enterDashboard()" style="display:inline-flex;align-items:center;gap:12px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#1e293b;font-family:'Inter',sans-serif;font-size:15px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;padding:18px 52px;border:none;border-radius:99px;cursor:pointer;box-shadow:0 0 30px rgba(245,158,11,.4),0 8px 32px rgba(0,0,0,.3);transition:all .2s;"
+        onmouseover="this.style.transform='scale(1.06)';this.style.boxShadow='0 0 50px rgba(245,158,11,.7)'"
+        onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 0 30px rgba(245,158,11,.4)'">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 8 16 12 12 16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        ENTER
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<style>
+@keyframes splash-fade-out {
+  0%   { opacity:1; transform:scale(1); }
+  100% { opacity:0; transform:scale(1.03); pointer-events:none; }
+}
+.splash-exit { animation:splash-fade-out 0.7s ease-in-out forwards !important; }
+</style>
+
+<script>
+// Stars
+(function(){
+  const cv=document.getElementById('splash-stars'); if(!cv) return;
+  cv.width=window.innerWidth; cv.height=window.innerHeight;
+  const ctx=cv.getContext('2d');
+  const SC=['#ffffff','#facc15','#fbbf24','#fde68a','#ef4444','#fca5a5'];
+  const stars=Array.from({length:90},()=>({
+    x:Math.random()*cv.width, y:Math.random()*cv.height,
+    size:.8+Math.random()*2.6, color:SC[Math.floor(Math.random()*SC.length)],
+    alpha:.2+Math.random()*.8, blink:.008+Math.random()*.02,
+    phase:Math.random()*Math.PI*2, type:Math.random()>.6?'cross':'dot'
+  }));
+  let fr=0;
+  (function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height); fr++;
+    stars.forEach(s=>{
+      const a=.15+.85*Math.abs(Math.sin(fr*s.blink+s.phase));
+      ctx.globalAlpha=a*s.alpha; ctx.fillStyle=s.color;
+      ctx.shadowColor=s.color; ctx.shadowBlur=s.size*3;
+      if(s.type==='cross'){
+        const sp=s.size*3; ctx.strokeStyle=s.color; ctx.lineWidth=s.size*.7;
+        ctx.beginPath(); ctx.moveTo(s.x-sp,s.y); ctx.lineTo(s.x+sp,s.y);
+        ctx.moveTo(s.x,s.y-sp); ctx.lineTo(s.x,s.y+sp); ctx.stroke();
+        ctx.beginPath(); ctx.arc(s.x,s.y,s.size*.8,0,Math.PI*2); ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.arc(s.x,s.y,s.size,0,Math.PI*2); ctx.fill();
+      }
+      ctx.shadowBlur=0; ctx.globalAlpha=1;
+    });
+    requestAnimationFrame(draw);
+  })();
+  window.addEventListener('resize',()=>{cv.width=window.innerWidth;cv.height=window.innerHeight;});
+})();
+
+// Staggered row entrance — each row slides up one by one
+(function(){
+  const rows  = document.querySelectorAll('.sr');
+  const delay = 180;   // ms between each row
+  const dur   = 600;   // fade+slide duration
+
+  rows.forEach((row, i) => {
+    setTimeout(() => {
+      row.style.transition = `opacity ${dur}ms ease, transform ${dur}ms ease`;
+      row.style.opacity    = '1';
+      row.style.transform  = 'translateY(0)';
+    }, 300 + i * delay);
+  });
+})();
+
+function enterDashboard() {
+  const s = document.getElementById('splash-screen');
+  s.classList.add('splash-exit');
+  setTimeout(()=>{ s.style.display='none'; }, 700);
+}
+</script>
+
+
+<div id="loading-screen" style="position:fixed;inset:0;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:20px;">
+  <div style="width:48px;height:48px;border:4px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;" class="spin"></div>
+  <p style="font-size:11px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.2em;">Loading Data...</p>
+</div>
+
+<div id="app" style="display:none;">
+<div style="display:flex;min-height:100vh;">
+
+  <!-- ═══ SIDEBAR ═══════════════════════════════════════════ -->
+  <aside id="sidebar">
+    <!-- Logo -->
+    <div style="margin-bottom:28px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+        <div style="background:#dc2626;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(220,38,38,.5);flex-shrink:0;">
+          <svg width="20" height="20" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <div style="font-size:18px;font-weight:900;color:white;letter-spacing:-.5px;line-height:1;">CLABSI</div>
+          <div style="font-size:11px;font-weight:800;color:#94a3b8;letter-spacing:.05em;line-height:1.2;">TRACKER <span style="background:#f59e0b;color:#1e293b;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:900;letter-spacing:.1em;">PRO</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Department -->
+    <p style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px;">Department</p>
+    <div class="dept-wrap">
+      <select id="dept-select" onchange="handleDept(this.value)">
+        <option value="medical">Medical Ward</option>
+        <option value="surgical"  disabled>Surgical (Coming Soon)</option>
+        <option value="ortho"     disabled>Orthopaedic (Coming Soon)</option>
+        <option value="icu"       disabled>ICU (Coming Soon)</option>
+        <option value="picu"      disabled>PICU (Coming Soon)</option>
+        <option value="nicu"      disabled>NICU (Coming Soon)</option>
+        <option value="scn"       disabled>SCN (Coming Soon)</option>
+      </select>
+    </div>
+
+    <!-- Global Rate -->
+    <div style="padding:16px;background:#fbbf24;border-radius:20px;border:2px solid #f59e0b;margin-bottom:24px;">
+      <p style="font-size:9px;font-weight:900;color:#1e293b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Global Benchmark</p>
+      <p style="font-size:15px;font-weight:900;color:#1e293b;font-style:italic;">&lt; 5.0 / 1000 Cath Days</p>
+    </div>
+
+    <!-- Nav -->
+    <p style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.2em;margin-bottom:10px;">Menu</p>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <button class="snav active" id="snav-dashboard" onclick="showPanel('dashboard')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+      <button class="snav" id="snav-feedback" onclick="showPanel('feedback')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Feedback
+      </button>
+      <button class="snav" id="snav-info" onclick="showPanel('info')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Info &amp; Contact
+      </button>
+    </div>
+
+    <div style="margin-top:auto;padding-top:16px;border-top:1px solid #1e293b;font-size:9px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.15em;text-align:center;margin-top:24px;">HTPN Infection Control</div>
   </aside>
 
-  <!-- MAIN -->
-  <main style="flex:1;overflow-y:auto;padding:40px 56px;" id="main-content">
+  <!-- ═══ MAIN ═══════════════════════════════════════════ -->
+  <main style="flex:1;overflow-y:auto;padding:36px 48px;" id="main-content">
 
-    <!-- HEADER -->
-    <header style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:48px;flex-wrap:wrap;gap:20px;">
-      <div style="display:flex;align-items:center;gap:16px;">
-        <button id="mobile-menu-btn" onclick="toggleSidebar()" class="no-print" style="display:none;padding:12px;background:white;border:1px solid #e2e8f0;border-radius:16px;cursor:pointer;">
-          <svg width="20" height="20" fill="none" stroke="#334155" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    <!-- Header -->
+    <header style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:16px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <button id="mobile-btn" onclick="toggleSidebar()" class="noprint" style="display:none;padding:10px;background:white;border:1px solid #e2e8f0;border-radius:14px;cursor:pointer;">
+          <svg width="18" height="18" fill="none" stroke="#334155" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
         <div>
-          <h1 style="font-size:clamp(18px,2.5vw,30px);font-weight:900;color:#0f172a;letter-spacing:-1px;text-transform:uppercase;line-height:1.1;margin-bottom:8px;">CLABSI RATE IN MEDICAL WARD HTPN 2026</h1>
-          <p style="color:#64748b;font-weight:700;display:flex;align-items:center;gap:8px;font-size:14px;">
-            <span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;" class="pulse"></span>
-            Spreadsheet Updated: <span id="last-updated">Memuatkan...</span>
+          <p id="dept-label" style="font-size:11px;font-weight:900;color:#4f46e5;text-transform:uppercase;letter-spacing:.15em;margin-bottom:3px;">Medical Ward</p>
+          <h1 style="font-size:clamp(16px,2vw,24px);font-weight:900;color:#0f172a;letter-spacing:-1px;text-transform:uppercase;line-height:1.1;margin-bottom:6px;">CLABSI SURVEILLANCE — HTPN 2026</h1>
+          <p style="color:#64748b;font-weight:600;display:flex;align-items:center;gap:8px;font-size:13px;">
+            <span style="width:9px;height:9px;border-radius:50%;background:#22c55e;display:inline-block;" class="pulse"></span>
+            Last updated: <span id="last-updated">Loading...</span>
           </p>
         </div>
       </div>
-      <div class="no-print" style="display:flex;gap:12px;align-items:center;">
-        <button onclick="fetchData()" title="Kemaskini" style="padding:20px;background:white;border:1px solid #e2e8f0;border-radius:24px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.1);">
-          <svg id="refresh-icon" width="24" height="24" fill="none" stroke="#334155" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      <div class="noprint" style="display:flex;gap:10px;align-items:center;">
+        <button onclick="refreshAll()" style="padding:14px;background:white;border:1px solid #e2e8f0;border-radius:16px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+          <svg id="refresh-icon" width="18" height="18" fill="none" stroke="#334155" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         </button>
-        <button onclick="window.print()" style="display:flex;align-items:center;gap:12px;background:#4f46e5;color:white;padding:20px 32px;border:none;border-radius:24px;font-family:Inter,sans-serif;font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:.15em;cursor:pointer;box-shadow:0 20px 40px rgba(79,70,229,.25);">
-          <svg width="20" height="20" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          PRINT ME
+        <button onclick="window.print()" style="display:flex;align-items:center;gap:8px;background:#4f46e5;color:white;padding:14px 24px;border:none;border-radius:16px;font-family:Inter,sans-serif;font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:.12em;cursor:pointer;box-shadow:0 16px 32px rgba(79,70,229,.25);">
+          <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print
         </button>
       </div>
     </header>
 
-    <!-- KPI CARDS -->
-    <div class="kpi-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-bottom:40px;">
-      <div class="kpi-red" style="padding:32px;border-radius:2.5rem;color:white;box-shadow:0 25px 50px rgba(0,0,0,.2);border-bottom:10px solid rgba(0,0,0,.15);transition:transform .2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
-          <svg width="28" height="28" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.2em;opacity:.7;">Total Cases</span>
+    <!-- ══ PANEL: DASHBOARD ══════════════════════════════ -->
+    <div id="panel-dashboard">
+
+      <!-- Coming soon overlay -->
+      <div id="cs-panel" style="display:none;text-align:center;padding:80px 40px;">
+        <div style="width:72px;height:72px;background:#f1f5f9;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+          <svg width="32" height="32" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
-        <h3 id="kpi-cases" style="font-size:60px;font-weight:900;letter-spacing:-3px;line-height:1;margin-bottom:8px;">—</h3>
-        <p style="font-size:13px;font-weight:700;opacity:.8;text-transform:uppercase;letter-spacing:.08em;">Annual Cumulative</p>
+        <h2 id="cs-name" style="font-size:26px;font-weight:900;color:#0f172a;margin-bottom:10px;"></h2>
+        <p style="font-size:15px;color:#64748b;font-weight:600;margin-bottom:6px;">Data not yet available for this department.</p>
+        <p style="font-size:13px;color:#94a3b8;">Please contact IPC Unit HTPN for further information.</p>
       </div>
-      <div class="kpi-blue" style="padding:32px;border-radius:2.5rem;color:white;box-shadow:0 25px 50px rgba(0,0,0,.2);border-bottom:10px solid rgba(0,0,0,.15);transition:transform .2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
-          <svg width="28" height="28" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          <span style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.2em;opacity:.7;">Catheter Days</span>
+
+      <!-- Tab nav (4 tabs) -->
+      <div id="tab-nav" class="noprint">
+        <button class="tab-btn active" id="tb-summary" onclick="switchTab('summary')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Overall Summary
+        </button>
+        <button class="tab-btn" id="tb-days" onclick="switchTab('days')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Days Last CLABSI Event
+        </button>
+        <button class="tab-btn" id="tb-compliance" onclick="switchTab('compliance')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>CVC Bundle Compliance
+        </button>
+        <button class="tab-btn" id="tb-denom" onclick="switchTab('denom')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Compliance Catheter Data Entry
+        </button>
+      </div>
+
+      <!-- ── TAB: OVERALL SUMMARY ── -->
+      <div id="tab-summary" class="tab-content active">
+        <div class="kpi-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:32px;">
+          <div class="kpi-card kpi-red">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+              <svg width="26" height="26" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span style="font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.2em;opacity:.7;">Total Cases</span>
+            </div>
+            <h3 id="kpi-cases" style="font-size:52px;font-weight:900;letter-spacing:-3px;line-height:1;margin-bottom:6px;">—</h3>
+            <p style="font-size:12px;font-weight:700;opacity:.8;text-transform:uppercase;letter-spacing:.08em;">Annual Cumulative</p>
+          </div>
+          <div class="kpi-card kpi-blue">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+              <svg width="26" height="26" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span style="font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.2em;opacity:.7;">Catheter Days</span>
+            </div>
+            <h3 id="kpi-days" style="font-size:52px;font-weight:900;letter-spacing:-3px;line-height:1;margin-bottom:6px;">—</h3>
+            <p style="font-size:12px;font-weight:700;opacity:.8;text-transform:uppercase;letter-spacing:.08em;">Exposure Duration</p>
+          </div>
+          <div class="kpi-card kpi-orange">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+              <svg width="26" height="26" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              <span style="font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.2em;opacity:.7;">Average Rate</span>
+            </div>
+            <h3 id="kpi-rate" style="font-size:52px;font-weight:900;letter-spacing:-3px;line-height:1;margin-bottom:6px;">—</h3>
+            <p style="font-size:12px;font-weight:700;opacity:.8;text-transform:uppercase;letter-spacing:.08em;">Per 1000 Cath Days</p>
+          </div>
         </div>
-        <h3 id="kpi-days" style="font-size:60px;font-weight:900;letter-spacing:-3px;line-height:1;margin-bottom:8px;">—</h3>
-        <p style="font-size:13px;font-weight:700;opacity:.8;text-transform:uppercase;letter-spacing:.08em;">Exposure Duration</p>
-      </div>
-      <div class="kpi-orange" style="padding:32px;border-radius:2.5rem;color:white;box-shadow:0 25px 50px rgba(0,0,0,.2);border-bottom:10px solid rgba(0,0,0,.15);transition:transform .2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform=''">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
-          <svg width="28" height="28" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          <span style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.2em;opacity:.7;">Average Rate</span>
+        <div style="background:white;padding:36px;border-radius:2.5rem;box-shadow:0 16px 32px rgba(0,0,0,.07);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+            <h3 style="font-weight:900;color:#0f172a;text-transform:uppercase;font-size:16px;">Monthly CLABSI Rate Trend</h3>
+            <span style="background:#f1f5f9;padding:7px 14px;border-radius:99px;font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;">Rate / 1000 Catheter Days</span>
+          </div>
+          <div style="height:280px;position:relative;"><canvas id="trend-chart"></canvas></div>
         </div>
-        <h3 id="kpi-rate" style="font-size:60px;font-weight:900;letter-spacing:-3px;line-height:1;margin-bottom:8px;">—</h3>
-        <p style="font-size:13px;font-weight:700;opacity:.8;text-transform:uppercase;letter-spacing:.08em;">Rate per 1000 Days</p>
+      </div>
+
+      <!-- ── TAB: DAYS LAST CLABSI EVENT ── -->
+      <div id="tab-days" class="tab-content">
+        <div style="background:white;padding:36px;border-radius:2.5rem;box-shadow:0 16px 32px rgba(0,0,0,.07);">
+          <h2 style="font-size:17px;font-weight:900;margin-bottom:24px;background:#0f172a;color:white;padding:18px 22px;border-radius:1.5rem;display:flex;align-items:center;gap:14px;">
+            <svg width="24" height="24" fill="none" stroke="#facc15" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            DAYS SINCE LAST CLABSI EVENT
+          </h2>
+          <div class="wgrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px;" id="ward-grid"></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px;" id="ward-date-grid"></div>
+        </div>
+      </div>
+
+      <!-- ── TAB: CVC BUNDLE COMPLIANCE ── -->
+      <div id="tab-compliance" class="tab-content">
+        <div style="background:white;padding:36px;border-radius:2.5rem;box-shadow:0 16px 32px rgba(0,0,0,.07);">
+          <h3 style="font-weight:900;color:#0f172a;text-transform:uppercase;font-size:16px;margin-bottom:24px;">CVC Care Bundle Compliance (%)</h3>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;" id="q-summary-grid"></div>
+          <div style="display:flex;gap:8px;margin-bottom:20px;">
+            <button class="wtab aw" id="btn-ins" onclick="toggleBundle('insertion')">Insertion Bundle</button>
+            <button class="wtab"    id="btn-mnt" onclick="toggleBundle('maintenance')">Maintenance Bundle</button>
+          </div>
+          <div style="height:280px;position:relative;"><canvas id="compliance-chart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ── TAB: COMPLIANCE CATHETER DATA ENTRY ── -->
+      <div id="tab-denom" class="tab-content">
+        <div style="background:white;padding:36px;border-radius:2.5rem;box-shadow:0 16px 32px rgba(0,0,0,.07);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+            <div>
+              <h3 style="font-weight:900;color:#0f172a;text-transform:uppercase;font-size:16px;margin-bottom:4px;">Compliance Catheter Data Entry</h3>
+              <p style="font-size:13px;color:#64748b;font-weight:600;">Monthly compliance % per ward · Enter data directly in Google Sheet → <strong>"Catheter Days by Wad"</strong></p>
+            </div>
+            <button onclick="loadDenomData()" style="display:flex;align-items:center;gap:7px;padding:10px 18px;background:#f1f5f9;border:none;border-radius:12px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;color:#334155;">
+              <svg id="denom-ri" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              Refresh from Sheet
+            </button>
+          </div>
+          <!-- Ward cards -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;" id="denom-cards">
+            <div style="padding:16px;background:#f8fafc;border-radius:16px;border-top:4px solid #e2e8f0;text-align:center;"><p style="font-size:11px;font-weight:900;color:#94a3b8;text-transform:uppercase;margin-bottom:6px;">WAD 1</p><p style="font-size:22px;font-weight:900;color:#94a3b8;">—</p></div>
+            <div style="padding:16px;background:#f8fafc;border-radius:16px;border-top:4px solid #e2e8f0;text-align:center;"><p style="font-size:11px;font-weight:900;color:#94a3b8;text-transform:uppercase;margin-bottom:6px;">WAD 2</p><p style="font-size:22px;font-weight:900;color:#94a3b8;">—</p></div>
+            <div style="padding:16px;background:#f8fafc;border-radius:16px;border-top:4px solid #e2e8f0;text-align:center;"><p style="font-size:11px;font-weight:900;color:#94a3b8;text-transform:uppercase;margin-bottom:6px;">WAD 3</p><p style="font-size:22px;font-weight:900;color:#94a3b8;">—</p></div>
+            <div style="padding:16px;background:#f8fafc;border-radius:16px;border-top:4px solid #e2e8f0;text-align:center;"><p style="font-size:11px;font-weight:900;color:#94a3b8;text-transform:uppercase;margin-bottom:6px;">WAD 6</p><p style="font-size:22px;font-weight:900;color:#94a3b8;">—</p></div>
+          </div>
+
+          <!-- Chart -->
+          <div style="height:300px;position:relative;">
+            <div id="denom-nodata" style="display:none;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:10px;">
+              <svg width="40" height="40" fill="none" stroke="#cbd5e1" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <p style="font-size:13px;font-weight:700;color:#94a3b8;">No data yet — enter data in Google Sheet</p>
+            </div>
+            <canvas id="denom-chart"></canvas>
+          </div>
+          <div style="margin-top:20px;padding:14px 18px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;display:flex;align-items:center;gap:12px;">
+            <svg width="18" height="18" fill="none" stroke="#2563eb" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <p style="font-size:12px;color:#1e40af;font-weight:600;margin:0;">Open Google Sheet → tab <strong>"Catheter Days by Wad"</strong> → fill monthly Cath Days &amp; Compliance % → chart updates here automatically.</p>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end panel-dashboard -->
+
+    <!-- ══ PANEL: FEEDBACK ══════════════════════════════ -->
+    <div id="panel-feedback" style="display:none;">
+      <div style="max-width:640px;margin:0 auto;background:white;padding:44px;border-radius:2.5rem;box-shadow:0 16px 32px rgba(0,0,0,.07);">
+        <div style="text-align:center;margin-bottom:32px;">
+          <div style="width:60px;height:60px;background:#4f46e5;border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+            <svg width="26" height="26" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h3 style="font-size:20px;font-weight:900;color:#0f172a;margin-bottom:6px;">Submit Feedback</h3>
+          <p style="color:#64748b;font-size:13px;">Suggestions, bugs or feature requests — saved directly to Google Sheets.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:18px;">
+          <div><label class="fl">Name</label><input id="fb-name" type="text" placeholder="Your name" class="fi"/></div>
+          <div><label class="fl">Role / Ward</label><input id="fb-role" type="text" placeholder="e.g. SN Ward 1, MO, IPC Officer" class="fi"/></div>
+          <div><label class="fl">Feedback Type</label>
+            <select id="fb-type" class="fi">
+              <option value="">-- Select --</option>
+              <option>Bug / Technical Issue</option>
+              <option>Feature Request</option>
+              <option>Data Accuracy Issue</option>
+              <option>Design Suggestion</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div><label class="fl">Message</label><textarea id="fb-msg" placeholder="Describe your feedback..." class="fi" style="height:110px;resize:vertical;"></textarea></div>
+          <button id="fb-btn" onclick="submitFeedback()" style="padding:14px;background:#4f46e5;color:white;border:none;border-radius:12px;font-family:Inter,sans-serif;font-weight:900;font-size:13px;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;">Submit Feedback</button>
+          <div id="fb-ok"  style="display:none;padding:14px;background:#f0fdf4;border:2px solid #bbf7d0;border-radius:10px;text-align:center;font-weight:700;color:#15803d;font-size:13px;">✅ Thank you! Feedback saved to Google Sheets.</div>
+          <div id="fb-err" style="display:none;padding:14px;background:#fef2f2;border:2px solid #fecaca;border-radius:10px;text-align:center;font-weight:700;color:#dc2626;font-size:13px;">❌ Failed to submit. Please try again.</div>
+        </div>
       </div>
     </div>
 
-    <!-- TREND CHART -->
-    <div class="print-card" style="background:white;padding:40px;border-radius:3rem;box-shadow:0 20px 40px rgba(0,0,0,.08);margin-bottom:24px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-        <h3 style="font-weight:900;color:#0f172a;text-transform:uppercase;letter-spacing:-.5px;font-size:18px;">Monthly Rate Trend</h3>
-        <span style="background:#f1f5f9;padding:8px 16px;border-radius:99px;font-size:10px;font-weight:900;color:#64748b;text-transform:uppercase;">CLABSI RATE / 1000 CATHETER DAYS</span>
+    <!-- ══ PANEL: INFO ══════════════════════════════════ -->
+    <div id="panel-info" style="display:none;">
+      <div style="max-width:760px;margin:0 auto;">
+        <div style="background:white;padding:44px;border-radius:2.5rem;box-shadow:0 16px 32px rgba(0,0,0,.07);margin-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
+            <div style="width:52px;height:52px;background:#dc2626;border-radius:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="22" height="22" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <div>
+              <h3 style="font-size:20px;font-weight:900;color:#0f172a;margin-bottom:3px;">CLABSI Surveillance Dashboard</h3>
+              <p style="font-size:11px;font-weight:700;color:#4f46e5;text-transform:uppercase;letter-spacing:.1em;">Hospital Tengku Permaisuri Norashikin (HTPN) — 2026</p>
+            </div>
+          </div>
+          <p style="font-size:14px;color:#475569;line-height:1.8;margin-bottom:20px;">This dashboard monitors <strong style="color:#0f172a;">Central Line-Associated Bloodstream Infection (CLABSI)</strong> rates across HTPN medical wards in real-time. Data is pulled from Google Sheets maintained by the IPC Unit.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div style="padding:12px 16px;background:#f8fafc;border-radius:12px;border-left:4px solid #4f46e5;"><p style="font-size:11px;font-weight:900;color:#0f172a;margin-bottom:3px;">📊 Overall Summary</p><p style="font-size:11px;color:#64748b;">KPI cards, monthly CLABSI rate trend chart</p></div>
+            <div style="padding:12px 16px;background:#f8fafc;border-radius:12px;border-left:4px solid #22c55e;"><p style="font-size:11px;font-weight:900;color:#0f172a;margin-bottom:3px;">✅ Days Last CLABSI Event</p><p style="font-size:11px;color:#64748b;">Days since last event per ward</p></div>
+            <div style="padding:12px 16px;background:#f8fafc;border-radius:12px;border-left:4px solid #f59e0b;"><p style="font-size:11px;font-weight:900;color:#0f172a;margin-bottom:3px;">📋 CVC Bundle Compliance</p><p style="font-size:11px;color:#64748b;">Insertion &amp; Maintenance bundle compliance by quarter</p></div>
+            <div style="padding:12px 16px;background:#f8fafc;border-radius:12px;border-left:4px solid #ec4899;"><p style="font-size:11px;font-weight:900;color:#0f172a;margin-bottom:3px;">🗓️ Compliance Catheter Data Entry</p><p style="font-size:11px;color:#64748b;">Monthly compliance % from Google Sheet "Catheter Days by Wad"</p></div>
+          </div>
+        </div>
+        <div style="background:white;padding:36px;border-radius:2.5rem;box-shadow:0 16px 32px rgba(0,0,0,.07);margin-bottom:20px;">
+          <h4 style="font-size:14px;font-weight:900;color:#0f172a;text-transform:uppercase;letter-spacing:.05em;margin-bottom:20px;">IPC Team — HTPN</h4>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:#f8fafc;border-radius:14px;"><div style="width:40px;height:40px;background:#4f46e5;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><p style="font-size:13px;font-weight:900;color:#0f172a;">Dr. Aneesa Tharek</p><p style="font-size:11px;color:#64748b;">Principal Investigator, IPC Unit HTPN</p></div></div>
+            <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:#f8fafc;border-radius:14px;"><div style="width:40px;height:40px;background:#0891b2;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><p style="font-size:13px;font-weight:900;color:#0f172a;">Dr. Marzilawati Abd Rahman</p><p style="font-size:11px;color:#64748b;">Infection Prevention &amp; Control, HTPN</p></div></div>
+            <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:#f8fafc;border-radius:14px;"><div style="width:40px;height:40px;background:#16a34a;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="18" height="18" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div><p style="font-size:13px;font-weight:900;color:#0f172a;">Official Email</p><p style="font-size:11px;color:#64748b;">uki@htpn.moh.gov.my</p></div></div>
+          </div>
+        </div>
+        <div style="background:#0f172a;padding:22px 28px;border-radius:1.5rem;color:white;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div><p style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.15em;margin-bottom:3px;">Version</p><p style="font-size:15px;font-weight:900;">v5.1 — June 2026</p></div>
+          <div style="text-align:right;"><p style="font-size:9px;font-weight:900;color:#475569;text-transform:uppercase;letter-spacing:.15em;margin-bottom:3px;">Backend</p><p style="font-size:12px;font-weight:700;color:#94a3b8;">Google Sheets + Apps Script + Netlify</p></div>
+        </div>
       </div>
-      <div id="trend-chart-wrap" style="height:300px;position:relative;"><canvas id="trend-chart"></canvas></div>
     </div>
 
-    <!-- DAYS SINCE LAST EVENT -->
-    <div id="days-section" style="margin-bottom:24px;page-break-before:always;break-before:page;">
-      <h2 style="font-size:20px;font-weight:900;margin-bottom:20px;background:#0f172a;color:white;padding:20px 24px;border-radius:2rem;display:flex;align-items:center;gap:16px;box-shadow:0 20px 40px rgba(0,0,0,.2);page-break-inside:avoid;break-inside:avoid;">
-        <svg width="28" height="28" fill="none" stroke="#facc15" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        DAYS SINCE LAST CLABSI EVENT
-      </h2>
-      <div class="ward-grid-wrap" style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;" id="ward-grid"></div>
-      <div class="ward-grid-wrap" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;" id="ward-date-grid"></div>
-    </div>
-
-    <!-- QUARTERLY -->
-    <div id="quarterly-section" class="print-card" style="background:white;padding:40px;border-radius:3rem;box-shadow:0 20px 40px rgba(0,0,0,.08);margin-bottom:40px;">
-      <h3 style="font-weight:900;color:#0f172a;text-transform:uppercase;font-size:18px;margin-bottom:28px;">Care Bundle Compliance (%)</h3>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;" id="q-summary-grid"></div>
-      <div id="compliance-chart-wrap" style="height:280px;position:relative;"><canvas id="compliance-chart"></canvas></div>
-    </div>
-
-    <footer style="text-align:center;color:#94a3b8;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.4em;padding:40px 0 20px;font-style:italic;">
-      &bull; HTPN INFECTION CONTROL &amp; SURVEILLANCE 2026 &bull; Dr Aneesa Tharek &bull; Dr Marzilawati Abd Rahman &bull; Healthcare Intelligence Office HTPN &bull;
+    <footer style="text-align:center;color:#94a3b8;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.35em;padding:36px 0 16px;font-style:italic;">
+      &bull; HTPN INFECTION CONTROL &amp; SURVEILLANCE 2026 &bull; Dr Aneesa Tharek &bull; Dr Marzilawati Abd Rahman &bull;
     </footer>
   </main>
 </div>
+</div>
+
+<div id="toast"></div>
 
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRhbKJs0H-N4AInALV71BNmmjXR2lUzWGuqu2gjGxz_YnbD4XYq4Mjpu0_l84PTc89AXkxw0Y7zZDnH/pub?gid=77045550&single=true&output=csv";
-const WARDS = ["WAD 1","WAD 2","WAD 3","WAD 6"];
-const Q_COLORS = ['#6366f1','#8b5cf6','#ec4899','#f97316'];
-let trendChart = null, compChart = null;
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxJyLYJ5s9VH94RfjMKIILbEN4_9kPntIQMFeou-8xlB7sPhg_MQ_QtT7XR-qUhSACI_A/exec';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRhbKJs0H-N4AInALV71BNmmjXR2lUzWGuqu2gjGxz_YnbD4XYq4Mjpu0_l84PTc89AXkxw0Y7zZDnH/pub?gid=77045550&single=true&output=csv';
+const WARDS    = ['WAD 1','WAD 2','WAD 3','WAD 6'];
+const QC       = ['#6366f1','#8b5cf6','#ec4899','#f97316'];
 
+let trendChart=null, compChart=null, denomChart=null;
+let compData=null, curBundle='insertion', denomData=null;
+
+// ── INIT ──────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(showApp, 8000);
+  fetchCSVData();
+  loadComplianceData();
+});
+
+// ── SIDEBAR PANELS ───────────────────────────────────────
+function showPanel(name) {
+  ['dashboard','feedback','info'].forEach(p => {
+    document.getElementById('panel-'+p).style.display = p===name ? 'block' : 'none';
+  });
+  ['dashboard','feedback','info'].forEach(p => {
+    document.getElementById('snav-'+p).classList.toggle('active', p===name);
+  });
+  if (name==='dashboard') {
+    if (trendChart) setTimeout(()=>trendChart.resize(),100);
+    if (compChart)  setTimeout(()=>compChart.resize(),100);
+  }
+}
+
+// ── DEPARTMENT ───────────────────────────────────────────
+function handleDept(val) {
+  const names={medical:'Medical Ward',surgical:'Surgical',ortho:'Orthopaedic',icu:'ICU',picu:'PICU',nicu:'NICU',scn:'SCN'};
+  document.getElementById('dept-label').textContent = names[val]||val;
+  const tabs = document.getElementById('tab-nav');
+  const cs   = document.getElementById('cs-panel');
+  if (val==='medical') {
+    tabs.style.display='flex';
+    cs.style.display='none';
+    document.querySelectorAll('.tab-content').forEach(t=>{ if(t.id==='tab-summary') t.classList.add('active'); else t.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(b=>{ b.classList.toggle('active', b.id==='tb-summary'); });
+  } else {
+    tabs.style.display='none';
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.getElementById('cs-name').textContent = names[val]||val;
+    cs.style.display='block';
+  }
+}
+
+// ── TAB SWITCHING ────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const t=document.getElementById('tab-'+id);
+  const b=document.getElementById('tb-'+id);
+  if(t) t.classList.add('active');
+  if(b) b.classList.add('active');
+  if(id==='compliance'&&compChart) setTimeout(()=>compChart.resize(),100);
+  if(id==='summary'&&trendChart)   setTimeout(()=>trendChart.resize(),100);
+  if(id==='denom') { setTimeout(()=>{ if(denomChart) denomChart.resize(); },100); loadDenomData(); }
+}
+
+// ── CSV DATA ──────────────────────────────────────────────
 function parseCSV(text) {
-  return text.split(/\r?\n/).map(line => {
-    const cells = []; let cur = '', inQ = false;
-    for (const ch of line) {
-      if (ch === '"') { inQ = !inQ; }
-      else if (ch === ',' && !inQ) { cells.push(cur.trim()); cur = ''; }
-      else { cur += ch; }
-    }
-    cells.push(cur.trim());
-    return cells;
+  return text.split(/\r?\n/).map(line=>{
+    const cells=[]; let cur='',inQ=false;
+    for(const ch of line){if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){cells.push(cur.trim());cur='';}else{cur+=ch;}}
+    cells.push(cur.trim()); return cells;
   });
 }
 
-async function fetchData() {
+async function fetchCSVData() {
   setRefreshSpin(true);
   try {
-    const res  = await fetch(CSV_URL + '&t=' + Date.now());
-    const text = await res.text();
-    const rows = parseCSV(text);
-
-    document.getElementById('last-updated').textContent = (rows[4]?.[0] || '').replace('\r','') || 'N/A';
-
-    const kR = rows[6] || [];
-    document.getElementById('kpi-cases').textContent = kR[0] || '—';
-    document.getElementById('kpi-days').textContent  = kR[4] || '—';
-    const rt = parseFloat(kR[8]);
-    document.getElementById('kpi-rate').textContent  = isNaN(rt) ? '—' : rt.toFixed(2);
-
-    const monthly = [];
-    for (let i = 11; i <= 22 && i < rows.length; i++) {
-      const r = rows[i];
-      if (!r[0] || r[0].toLowerCase().includes('jumlah')) break;
-      const k = parseFloat(r[6]);
-      monthly.push({
-        bulan: r[0].replace('\r',''),
-        kes:   parseInt(r[2])  || 0,
-        days:  parseInt(r[4])  || 0,
-        kadar: isNaN(k) ? 0 : +k.toFixed(2),
-      });
+    const ctrl=new AbortController();
+    const tm=setTimeout(()=>ctrl.abort(),10000);
+    const res=await fetch(CSV_URL+'&t='+Date.now(),{signal:ctrl.signal});
+    clearTimeout(tm);
+    const rows=parseCSV(await res.text());
+    document.getElementById('last-updated').textContent=(rows[4]?.[0]||'').replace('\r','')||'N/A';
+    const kR=rows[6]||[];
+    document.getElementById('kpi-cases').textContent=kR[0]||'—';
+    document.getElementById('kpi-days').textContent=kR[4]||'—';
+    const rt=parseFloat(kR[8]);
+    document.getElementById('kpi-rate').textContent=isNaN(rt)?'—':rt.toFixed(2);
+    const monthly=[];
+    for(let i=11;i<=22&&i<rows.length;i++){
+      const r=rows[i]; if(!r[0]||r[0].toLowerCase().includes('jumlah')) break;
+      const k=parseFloat(r[6]);
+      monthly.push({bulan:r[0].replace('\r',''),kadar:isNaN(k)?0:+k.toFixed(2)});
     }
-
-    const wardHIdx = rows.findIndex(r => r[0] && r[0].toUpperCase().includes('WARD 1'));
-    const wardVals = wardHIdx >= 0 ? (rows[wardHIdx + 1] || []) : [];
-    const wardDays  = [wardVals[0], wardVals[3], wardVals[6], wardVals[9]];
-
-    const dateEventIdx = rows.findIndex(r => r[0] && r[0].toUpperCase().includes('DATE') && r[0].toUpperCase().includes('LAST EVENT'));
-    const dateRow = dateEventIdx >= 0 ? rows[dateEventIdx] : [];
-    const wardDates = [dateRow[1], dateRow[4], dateRow[7], dateRow[10]];
-
-    const qLabels  = ['Q1','Q2','Q3','Q4'];
-    const qPeriods = ['Jan – Mac','Apr – Jun','Jul – Sep','Okt – Dis'];
-    const qResults = {};
-
-    qLabels.forEach(q => {
-      qResults[q] = {};
-      const qRowIdx = rows.findIndex(r =>
-        r.some(c => c && c.includes(q) &&
-          (c.includes('Jan') || c.includes('Apr') || c.includes('Jul') || c.includes('Okt'))
-        )
-      );
-      if (qRowIdx < 0) return;
-
-      for (let i = qRowIdx + 1; i < qRowIdx + 12 && i < rows.length; i++) {
-        const r = rows[i];
-        if (!r || !r[0]) continue;
-        const w = WARDS.find(w => r[0].replace('\r','').toUpperCase() === w);
-        if (w) {
-          const ov = parseFloat(r[10]);
-          qResults[q][w] = isNaN(ov) ? 0 : ov;
-        }
+    const wHi=rows.findIndex(r=>r[0]&&r[0].toUpperCase().includes('WARD 1'));
+    const wV=wHi>=0?(rows[wHi+1]||[]):[];
+    const wD=[wV[0],wV[3],wV[6],wV[9]];
+    const dI=rows.findIndex(r=>r[0]&&r[0].toUpperCase().includes('DATE')&&r[0].toUpperCase().includes('LAST EVENT'));
+    const dR=dI>=0?rows[dI]:[];
+    const wDt=[dR[1],dR[4],dR[7],dR[10]];
+    const qL=['Q1','Q2','Q3','Q4'], qP=['Jan – Mar','Apr – Jun','Jul – Sep','Oct – Dec'], qRes={};
+    qL.forEach(q=>{
+      qRes[q]={};
+      const qi=rows.findIndex(r=>r.some(c=>c&&c.includes(q)&&(c.includes('Jan')||c.includes('Apr')||c.includes('Jul')||c.includes('Okt'))));
+      if(qi<0) return;
+      for(let i=qi+1;i<qi+12&&i<rows.length;i++){
+        const r=rows[i]; if(!r||!r[0]) continue;
+        const w=WARDS.find(w=>r[0].replace('\r','').toUpperCase()===w);
+        if(w){const ov=parseFloat(r[10]);qRes[q][w]=isNaN(ov)?0:ov;}
       }
     });
-
     renderTrend(monthly);
-    renderWards(wardDays, wardDates);
-    renderQSummary(qResults, qPeriods);
-    renderCompChart(qResults);
+    renderWards(wD,wDt);
+    renderQSummary(qRes,qP);
+    renderCompChart(qRes);
     showApp();
-
-  } catch(e) {
-    console.error('fetchData error:', e);
-    showApp();
-  }
+  } catch(e){ console.error('CSV:',e); showApp(); }
   setRefreshSpin(false);
 }
 
+// ── TREND CHART ───────────────────────────────────────────
 function renderTrend(monthly) {
-  if (trendChart) trendChart.destroy();
-  const ctx = document.getElementById('trend-chart').getContext('2d');
-  const labels = monthly.map(d => d.bulan);
-  const values = monthly.map(d => d.kadar);
-
+  if(trendChart) trendChart.destroy();
+  const ctx=document.getElementById('trend-chart').getContext('2d');
+  const labels=monthly.map(d=>d.bulan), values=monthly.map(d=>d.kadar);
   Chart.register(ChartDataLabels);
+  trendChart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'CLABSI Rate',data:values,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.08)',borderWidth:6,pointBackgroundColor:values.map(v=>v>0&&v>=5?'#ef4444':'#f59e0b'),pointBorderColor:'#fff',pointBorderWidth:3,pointRadius:9,tension:.4,fill:true,
+    datalabels:{display:c=>values[c.dataIndex]>0,formatter:v=>v.toFixed(2),color:c=>values[c.dataIndex]>=5?'#b91c1c':'#92400e',font:{size:11,weight:'900',family:'Inter'},anchor:'end',align:'top',offset:6,padding:{top:3,bottom:3,left:5,right:5},backgroundColor:c=>values[c.dataIndex]>=5?'rgba(254,226,226,.9)':'rgba(254,243,199,.9)',borderRadius:7,borderWidth:1.5,borderColor:c=>values[c.dataIndex]>=5?'#fca5a5':'#fcd34d'}}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:36,right:16}},plugins:{legend:{display:false},datalabels:{},tooltip:{backgroundColor:'#0f172a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',padding:12,cornerRadius:14,callbacks:{title:c=>c[0].label,label:c=>{const v=c.parsed.y;return v===0?' No Data':` Rate: ${v.toFixed(2)} / 1000 catheter days`;},afterLabel:c=>{const v=c.parsed.y;return v===0?'':v>=5?' ⚠️ Exceeds Global Average!':' ✅ Below Global Average';}}},annotation:{annotations:{l:{type:'line',yMin:5,yMax:5,borderColor:'#ef4444',borderWidth:2,borderDash:[6,4],label:{content:'GLOBAL AVERAGE < 5.0',display:true,position:'end',color:'#ef4444',font:{size:10,weight:'900'},backgroundColor:'transparent',yAdjust:-12}}}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:11,weight:'700'}},border:{display:false}},y:{grid:{color:'#f1f5f9'},ticks:{color:'#94a3b8'},border:{display:false},min:0}}}
+  });
+}
 
-  trendChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'CLABSI Rate',
-        data: values,
-        borderColor: '#f59e0b',
-        backgroundColor: 'rgba(245,158,11,.08)',
-        borderWidth: 8,
-        pointBackgroundColor: values.map(v => v > 0 && v >= 5 ? '#ef4444' : '#f59e0b'),
-        pointBorderColor: '#ffffff',
-        pointBorderWidth: 4,
-        pointRadius: 10,
-        pointHoverRadius: 13,
-        tension: 0.4,
-        fill: true,
-        datalabels: {
-          display: ctx => values[ctx.dataIndex] > 0,
-          formatter: v => v.toFixed(2),
-          color: ctx => values[ctx.dataIndex] >= 5 ? '#b91c1c' : '#92400e',
-          font: { size: 13, weight: '900', family: 'Inter' },
-          anchor: 'end',
-          align: 'top',
-          offset: 8,
-          padding: { top: 4, bottom: 4, left: 6, right: 6 },
-          backgroundColor: ctx => values[ctx.dataIndex] >= 5
-            ? 'rgba(254,226,226,0.9)'
-            : 'rgba(254,243,199,0.9)',
-          borderRadius: 8,
-          borderWidth: 1.5,
-          borderColor: ctx => values[ctx.dataIndex] >= 5 ? '#fca5a5' : '#fcd34d',
-        }
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      layout: { padding: { top: 40, right: 20 } },
-      plugins: {
-        legend: { display: false },
-        datalabels: {},
-        tooltip: {
-          backgroundColor: '#0f172a',
-          titleColor: '#f1f5f9',
-          bodyColor: '#94a3b8',
-          padding: 14, cornerRadius: 16,
-          callbacks: {
-            title: c => c[0].label,
-            label: c => {
-              const v = c.parsed.y;
-              if (v === 0) return ' Tiada Data';
-              return ` Rate: ${v.toFixed(2)} / 1000 catheter days`;
-            },
-            afterLabel: c => {
-              const v = c.parsed.y;
-              if (v === 0) return '';
-              return v >= 5 ? ' ⚠️ Melebihi Global Average!' : ' ✅ Di bawah Global Average';
-            }
-          }
-        },
-        annotation: {
-          annotations: {
-            stdLine: {
-              type: 'line', yMin: 5, yMax: 5,
-              borderColor: '#ef4444', borderWidth: 2, borderDash: [6,4],
-              label: {
-                content: 'GLOBAL AVERAGE < 5.0',
-                display: true, position: 'end',
-                color: '#ef4444', font: { size: 11, weight: '900' },
-                backgroundColor: 'transparent', yAdjust: -14
-              }
-            }
-          }
-        }
+// ── WARD CARDS ────────────────────────────────────────────
+function renderWards(days,dates) {
+  const names=['Ward 1','Ward 2','Ward 3','Ward 6'];
+  const g=document.getElementById('ward-grid'), dg=document.getElementById('ward-date-grid');
+  g.innerHTML=''; dg.innerHTML='';
+  names.forEach((name,i)=>{
+    const val=(days[i]||'').replace('\r','')||'—';
+    const d=document.createElement('div'); d.className='ward-card';
+    d.innerHTML=`<p style="font-size:20px;font-weight:900;color:#0f172a;letter-spacing:-1px;text-transform:uppercase;">${name}</p><p style="font-size:68px;font-weight:900;color:#0f172a;line-height:1;margin:10px 0;">${val}</p><p style="font-size:10px;font-weight:900;border-top:1px solid rgba(0,0,0,.1);padding-top:10px;text-transform:uppercase;letter-spacing:.2em;color:#1e293b;">Days Case Free</p>`;
+    g.appendChild(d);
+    const dv=(dates[i]||'').replace('\r','');
+    if(dv){const dd=document.createElement('div');dd.style.cssText='background:white;border-radius:14px;padding:12px;text-align:center;border:1px solid #e2e8f0;';dd.innerHTML=`<p style="font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase;margin-bottom:3px;">Date of Last Event</p><p style="font-size:13px;font-weight:900;color:#0f172a;">${dv}</p>`;dg.appendChild(dd);}
+  });
+}
+
+// ── Q SUMMARY + BAR CHART ─────────────────────────────────
+function renderQSummary(qRes,periods) {
+  const bm={Q1:'#6366f1',Q2:'#8b5cf6',Q3:'#ec4899',Q4:'#f97316'};
+  const g=document.getElementById('q-summary-grid'); g.innerHTML='';
+  ['Q1','Q2','Q3','Q4'].forEach((q,qi)=>{
+    const wards=qRes[q]||{};
+    const vals=WARDS.map(w=>wards[w]||0).filter(v=>v>0);
+    const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+    const good=avg!==null&&avg>=80;
+    const div=document.createElement('div'); div.style.cssText='background:white;border:2px solid #e2e8f0;border-radius:18px;overflow:hidden;';
+    div.innerHTML=`<div style="background:${bm[q]};padding:12px 16px;"><div style="font-size:16px;font-weight:900;color:white;">${q}</div><div style="font-size:10px;color:rgba(255,255,255,.75);font-weight:600;">${periods[qi]}</div></div><div style="padding:12px 16px;">${WARDS.map(w=>{const pct=wards[w]||0;const ok=pct>=80;return`<div class="q-row"><span style="font-weight:700;color:#475569;">${w}</span><span style="font-weight:900;color:${pct>0?(ok?'#16a34a':'#dc2626'):'#94a3b8'};">${pct>0?pct.toFixed(1)+'% '+(ok?'✅':'⚠️'):'—'}</span></div>`;}).join('')}<div style="padding-top:8px;margin-top:6px;border-top:2px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:10px;font-weight:700;color:#64748b;">${q} Average</span><span style="font-size:16px;font-weight:900;color:${avg!==null?(good?'#16a34a':'#dc2626'):'#94a3b8'};">${avg!==null?avg.toFixed(1)+'%':'—'}</span></div></div>`;
+    g.appendChild(div);
+  });
+}
+function renderCompChart(qRes) {
+  if(compChart) compChart.destroy();
+  const ctx=document.getElementById('compliance-chart').getContext('2d');
+  compChart=new Chart(ctx,{type:'bar',data:{labels:WARDS,datasets:['Q1','Q2','Q3','Q4'].map((q,i)=>({label:q,data:WARDS.map(w=>(qRes[q]||{})[w]||0),backgroundColor:QC[i]+'aa',borderColor:QC[i],borderWidth:2,borderRadius:5,borderSkipped:false}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#64748b',font:{size:11,weight:'900'},padding:16,usePointStyle:true,pointStyle:'circle'}},tooltip:{backgroundColor:'#0f172a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',padding:12,cornerRadius:14,callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y>0?c.parsed.y.toFixed(1)+'%':'No Data'}`}}},scales:{x:{grid:{display:false},ticks:{color:'#64748b',font:{size:12,weight:'900'}},border:{display:false}},y:{min:0,max:100,grid:{color:'#f1f5f9'},ticks:{color:'#94a3b8',callback:v=>v+'%'},border:{display:false}}}}});
+}
+
+// ── COMPLIANCE DATA (GAS) ─────────────────────────────────
+async function loadComplianceData() {
+  try {
+    const r=await callGAS({action:'getComplianceData'});
+    if(r.success&&r.data){ compData=r.data; renderComplianceLineChart(curBundle); }
+  } catch(e){ console.warn('GAS compliance:',e); }
+}
+function toggleBundle(type) {
+  curBundle=type;
+  document.getElementById('btn-ins').classList.toggle('aw',type==='insertion');
+  document.getElementById('btn-mnt').classList.toggle('aw',type==='maintenance');
+  if(compData) renderComplianceLineChart(type);
+}
+function renderComplianceLineChart(type) {
+  if(!compData) return;
+  if(compChart) compChart.destroy();
+  const ctx=document.getElementById('compliance-chart').getContext('2d');
+  const ds=compData[type]||{};
+  compChart=new Chart(ctx,{type:'line',data:{labels:compData.months||[],datasets:WARDS.map((w,i)=>({label:w,data:ds[w]||[],borderColor:QC[i],backgroundColor:QC[i]+'18',borderWidth:3,pointRadius:6,pointBorderColor:'#fff',pointBorderWidth:2,tension:.4,fill:false}))},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#64748b',font:{size:11,weight:'900'},usePointStyle:true,pointStyle:'circle',padding:16}},tooltip:{backgroundColor:'#0f172a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',padding:12,cornerRadius:14,callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y>0?c.parsed.y.toFixed(1)+'%':'No data'}`}},annotation:{annotations:{t:{type:'line',yMin:80,yMax:80,borderColor:'#22c55e',borderWidth:2,borderDash:[6,4],label:{content:'TARGET ≥ 80%',display:true,position:'end',color:'#16a34a',font:{size:10,weight:'900'},backgroundColor:'transparent',yAdjust:-12}}}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:11,weight:'700'}},border:{display:false}},y:{min:0,max:100,grid:{color:'#f1f5f9'},ticks:{color:'#94a3b8',callback:v=>v+'%'},border:{display:false}}}}
+  });
+}
+
+// ── DENOM CHART (GAS) ─────────────────────────────────────
+async function loadDenomData() {
+  const icon=document.getElementById('denom-ri');
+  if(icon) icon.classList.add('spin');
+  try {
+    const r=await callGAS({action:'getCatheterDaysData'});
+    if(r.success&&r.data){ denomData=r.data; renderDenomCards(r.data); renderDenomChart(r.data); }
+    else showDenomEmpty();
+  } catch(e){ console.warn('GAS denom:',e); showDenomEmpty(); }
+  if(icon) icon.classList.remove('spin');
+}
+
+function showDenomEmpty() {
+  const nd=document.getElementById('denom-nodata');
+  if(nd) nd.style.display='flex';
+}
+function renderDenomCards(data) {
+  const g=document.getElementById('denom-cards'); if(!g) return;
+  const colors=['#4f46e5','#0891b2','#16a34a','#ea580c'];
+  const comp=data.compliance||{};
+  g.innerHTML='';
+  WARDS.forEach((ward,i)=>{
+    const vals=(comp[ward]||[]).filter(v=>v>0);
+    const avg=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1):null;
+    const good=avg!==null&&parseFloat(avg)>=80;
+    const div=document.createElement('div');
+    div.style.cssText=`padding:16px 18px;background:#f8fafc;border-radius:16px;border-top:4px solid ${colors[i]};text-align:center;`;
+    div.innerHTML=`<p style="font-size:11px;font-weight:900;color:#64748b;text-transform:uppercase;margin-bottom:8px;">${ward}</p><p style="font-size:28px;font-weight:900;color:${avg!==null?(good?'#16a34a':'#dc2626'):colors[i]};">${avg!==null?avg+'%':'—'}</p><p style="font-size:10px;color:#94a3b8;margin-top:3px;">${avg!==null?(good?'✅ On target':'⚠️ Below 80%'):'No data yet'}</p>`;
+    g.appendChild(div);
+  });
+}
+function renderDenomChart(data) {
+  if(denomChart) denomChart.destroy();
+  const nd=document.getElementById('denom-nodata');
+  const ctx=document.getElementById('denom-chart'); if(!ctx) return;
+  const months=data.months||['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'];
+  const ds=data['compliance']||{};
+  const hasData=WARDS.some(w=>(ds[w]||[]).some(v=>v>0));
+  if(nd) nd.style.display=hasData?'none':'flex';
+  if(!hasData) return;
+  denomChart=new Chart(ctx.getContext('2d'),{
+    type:'line',
+    data:{labels:months,datasets:WARDS.map((w,i)=>({
+      label:w,
+      data:ds[w]||Array(12).fill(0),
+      borderColor:QC[i],
+      backgroundColor:QC[i]+'18',
+      borderWidth:3,
+      pointRadius:7,
+      pointBorderColor:'#fff',
+      pointBorderWidth:2,
+      pointBackgroundColor:(ds[w]||[]).map(v=>v>0?(v>=80?QC[i]:'#ef4444'):QC[i]),
+      tension:.4,
+      fill:false,
+    }))},
+    options:{
+      responsive:true,maintainAspectRatio:false,layout:{padding:{top:16}},
+      plugins:{
+        legend:{labels:{color:'#64748b',font:{size:11,weight:'900'},usePointStyle:true,pointStyle:'circle',padding:16}},
+        tooltip:{backgroundColor:'#0f172a',titleColor:'#f1f5f9',bodyColor:'#94a3b8',padding:12,cornerRadius:14,
+          callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y>0?c.parsed.y.toFixed(1)+'%':'No data'}`}},
+        annotation:{annotations:{t:{type:'line',yMin:80,yMax:80,borderColor:'#22c55e',borderWidth:2,borderDash:[6,4],
+          label:{content:'TARGET ≥ 80%',display:true,position:'end',color:'#16a34a',font:{size:10,weight:'900'},backgroundColor:'transparent',yAdjust:-12}}}}
       },
-      scales: {
-        x: { grid:{display:false}, ticks:{color:'#94a3b8',font:{size:12,weight:'900'}}, border:{display:false} },
-        y: { grid:{color:'#f1f5f9'}, ticks:{color:'#94a3b8',font:{size:11,weight:'700'}}, border:{display:false}, min:0 }
+      scales:{
+        x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:11,weight:'700'}},border:{display:false}},
+        y:{min:0,max:100,grid:{color:'#f1f5f9'},ticks:{color:'#94a3b8',callback:v=>v+'%'},border:{display:false}}
       }
     }
   });
 }
 
-function renderWards(days, dates) {
-  const names = ['Wad 1','Wad 2','Wad 3','Wad 6'];
-  const grid  = document.getElementById('ward-grid');
-  const dgrid = document.getElementById('ward-date-grid');
-  grid.innerHTML = ''; dgrid.innerHTML = '';
-
-  names.forEach((name, i) => {
-    const val = (days[i] || '').replace('\r','') || '—';
-    const d = document.createElement('div');
-    d.className = 'ward-card';
-    d.innerHTML = `
-      <p style="font-size:24px;font-weight:900;color:#0f172a;letter-spacing:-1px;text-transform:uppercase;">${name}</p>
-      <p style="font-size:76px;font-weight:900;color:#0f172a;line-height:1;margin:12px 0;filter:drop-shadow(0 2px 4px rgba(0,0,0,.15));">${val}</p>
-      <p style="font-size:11px;font-weight:900;border-top:1px solid rgba(0,0,0,.1);padding-top:12px;text-transform:uppercase;letter-spacing:.2em;color:#1e293b;font-style:italic;">Days Case Free</p>`;
-    grid.appendChild(d);
-
-    const dateVal = (dates[i] || '').replace('\r','');
-    if (dateVal) {
-      const dd = document.createElement('div');
-      dd.style.cssText = 'background:white;border-radius:16px;padding:14px;text-align:center;border:1px solid #e2e8f0;';
-      dd.innerHTML = `<p style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">Date Last Event</p>
-        <p style="font-size:14px;font-weight:900;color:#0f172a;">${dateVal}</p>`;
-      dgrid.appendChild(dd);
-    }
-  });
+// ── FEEDBACK ──────────────────────────────────────────────
+async function submitFeedback() {
+  const name=document.getElementById('fb-name')?.value.trim();
+  const role=document.getElementById('fb-role')?.value.trim();
+  const type=document.getElementById('fb-type')?.value;
+  const msg=document.getElementById('fb-msg')?.value.trim();
+  document.getElementById('fb-ok').style.display='none';
+  document.getElementById('fb-err').style.display='none';
+  if(!name||!msg||!type){alert('Please fill in Name, Feedback Type, and Message.');return;}
+  const btn=document.getElementById('fb-btn');
+  btn.textContent='Saving...'; btn.disabled=true;
+  try {
+    const r=await callGAS({action:'saveFeedback',data:{name,role,type,message:msg}});
+    if(r.success){
+      document.getElementById('fb-ok').style.display='block';
+      ['fb-name','fb-role','fb-msg'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('fb-type').value='';
+    } else { document.getElementById('fb-err').style.display='block'; }
+  } catch(e){ document.getElementById('fb-err').style.display='block'; }
+  btn.textContent='Submit Feedback'; btn.disabled=false;
 }
 
-function renderQSummary(qResults, periods) {
-  const bgMap = {Q1:'#6366f1',Q2:'#8b5cf6',Q3:'#ec4899',Q4:'#f97316'};
-  const grid  = document.getElementById('q-summary-grid');
-  grid.innerHTML = '';
-
-  ['Q1','Q2','Q3','Q4'].forEach((q, qi) => {
-    const wards = qResults[q] || {};
-    const vals  = WARDS.map(w => wards[w] || 0).filter(v => v > 0);
-    const avg   = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
-    const good  = avg !== null && avg >= 80;
-
-    const div = document.createElement('div');
-    div.style.cssText = 'background:white;border:2px solid #e2e8f0;border-radius:20px;overflow:hidden;';
-    div.innerHTML = `
-      <div style="background:${bgMap[q]};padding:14px 18px;">
-        <div style="font-size:18px;font-weight:900;color:white;">${q}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.75);font-weight:600;">${periods[qi]}</div>
-      </div>
-      <div style="padding:14px 18px;">
-        ${WARDS.map(w => {
-          const pct = wards[w] || 0;
-          const ok  = pct >= 80;
-          return `<div class="q-row">
-            <span style="font-weight:700;color:#475569;">${w}</span>
-            <span style="font-weight:900;color:${pct>0?(ok?'#16a34a':'#dc2626'):'#94a3b8'};">
-              ${pct>0 ? pct.toFixed(1)+'% '+(ok?'✅':'⚠️') : '—'}
-            </span>
-          </div>`;
-        }).join('')}
-        <div style="padding-top:10px;margin-top:8px;border-top:2px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:11px;font-weight:700;color:#64748b;">Purata ${q}</span>
-          <span style="font-size:18px;font-weight:900;color:${avg!==null?(good?'#16a34a':'#dc2626'):'#94a3b8'};">
-            ${avg !== null ? avg.toFixed(1)+'%' : '—'}
-          </span>
-        </div>
-      </div>`;
-    grid.appendChild(div);
-  });
+// ── UTILITIES ─────────────────────────────────────────────
+async function callGAS(p) {
+  const r=await fetch(GAS_URL,{method:'POST',body:JSON.stringify(p)});
+  return await r.json();
 }
-
-function renderCompChart(qResults) {
-  if (compChart) compChart.destroy();
-  const ctx = document.getElementById('compliance-chart').getContext('2d');
-  compChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: WARDS,
-      datasets: ['Q1','Q2','Q3','Q4'].map((q,i) => ({
-        label: q,
-        data: WARDS.map(w => (qResults[q]||{})[w] || 0),
-        backgroundColor: Q_COLORS[i] + 'bb',
-        borderColor: Q_COLORS[i],
-        borderWidth: 2,
-        borderRadius: 6,
-        borderSkipped: false,
-      }))
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { labels:{color:'#64748b',font:{size:11,weight:'900'},padding:20,usePointStyle:true,pointStyle:'circle'} },
-        tooltip: {
-          backgroundColor:'#0f172a', titleColor:'#f1f5f9', bodyColor:'#94a3b8',
-          padding:14, cornerRadius:16,
-          callbacks:{ label: c => ` ${c.dataset.label}: ${c.parsed.y>0?c.parsed.y.toFixed(1)+'%':'Tiada Data'}` }
-        }
-      },
-      scales: {
-        x: { grid:{display:false}, ticks:{color:'#64748b',font:{size:13,weight:'900'}}, border:{display:false} },
-        y: { min:0, max:100, grid:{color:'#f1f5f9'}, ticks:{color:'#94a3b8',font:{size:11,weight:'700'},callback:v=>v+'%'}, border:{display:false} }
-      }
-    }
-  });
-}
-
 function showApp() {
-  document.getElementById('loading-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('app').style.display='block';
 }
 function setRefreshSpin(on) {
   document.getElementById('refresh-icon').classList[on?'add':'remove']('spin');
 }
 function toggleSidebar() {
-  const sb = document.getElementById('sidebar');
-  sb.style.display = sb.style.display === 'none' ? 'flex' : 'none';
+  const sb=document.getElementById('sidebar');
+  sb.style.display=sb.style.display==='none'?'flex':'none';
 }
-
-fetchData();
+function refreshAll() {
+  fetchCSVData(); loadComplianceData();
+  if(document.getElementById('tab-denom').classList.contains('active')) loadDenomData();
+}
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
 </script>
+
+
+
+
 </body>
 </html>
