@@ -758,13 +758,23 @@ async function submitFeedback() {
   const btn=document.getElementById('fb-btn');
   btn.textContent='Saving...'; btn.disabled=true;
   try {
-    const r=await callGAS({action:'saveFeedback',data:{name,role,type,message:msg}});
-    if(r.success){
-      document.getElementById('fb-ok').style.display='block';
-      ['fb-name','fb-role','fb-msg'].forEach(id=>document.getElementById(id).value='');
-      document.getElementById('fb-type').value='';
-    } else { document.getElementById('fb-err').style.display='block'; }
-  } catch(e){ document.getElementById('fb-err').style.display='block'; }
+    // Use GET with URL params to avoid CORS issues
+    const params = new URLSearchParams({
+      action: 'saveFeedback',
+      name:   name,
+      role:   role  || '',
+      type:   type,
+      message: msg,
+      timestamp: new Date().toLocaleString('ms-MY',{timeZone:'Asia/Kuala_Lumpur'})
+    });
+    await fetch(GAS_URL + '?' + params.toString(), { method:'GET', mode:'no-cors' });
+    // no-cors = can't read response, but request goes through
+    document.getElementById('fb-ok').style.display='block';
+    ['fb-name','fb-role','fb-msg'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('fb-type').value='';
+  } catch(e){
+    document.getElementById('fb-err').style.display='block';
+  }
   btn.textContent='Submit Feedback'; btn.disabled=false;
 }
 
