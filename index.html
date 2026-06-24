@@ -53,20 +53,23 @@
     @media(max-width:768px){
     #sidebar{display:none!important;}
     #mobile-btn{display:flex!important;}
-    #main-content{padding:14px 12px!important;}
+    #mobile-bottom-nav{display:flex!important;}
+    #main-content{padding:14px 12px 80px 12px!important;overflow-x:hidden!important;}
     .kpi-grid{grid-template-columns:1fr!important;gap:12px!important;}
-    .wgrid{grid-template-columns:1fr 1fr!important;gap:12px!important;}
+    .wgrid{grid-template-columns:1fr 1fr!important;gap:10px!important;}
     #tab-nav{overflow-x:auto!important;flex-wrap:nowrap!important;padding:4px!important;gap:4px!important;}
-    .tab-btn{padding:8px 10px!important;font-size:9px!important;letter-spacing:.04em!important;}
-    .ward-card p:last-child{font-size:9px!important;letter-spacing:.1em!important;white-space:nowrap!important;}
-    .ward-card p:first-child{font-size:16px!important;}
+    .tab-btn{padding:8px 10px!important;font-size:9px!important;letter-spacing:.04em!important;flex-shrink:0!important;}
+    .ward-card{min-width:0!important;word-break:break-word!important;}
+    .ward-card p:last-child{font-size:9px!important;letter-spacing:.08em!important;}
+    .ward-card p:first-child{font-size:15px!important;}
 }
 @media(max-width:480px){
     .kpi-card{padding:18px!important;border-radius:1.5rem!important;}
-    .kpi-card h3{font-size:40px!important;}
-    .ward-card{padding:1rem 0.6rem!important;border-radius:1.5rem!important;}
-    .ward-card p:nth-child(2){font-size:52px!important;}
-    h1{font-size:15px!important;}
+    .kpi-card h3{font-size:38px!important;}
+    .ward-card{padding:1rem 0.5rem!important;border-radius:1.5rem!important;}
+    .ward-card p:nth-child(2){font-size:48px!important;}
+    h1{font-size:14px!important;}
+    #main-content{padding:12px 10px 80px 10px!important;}
 }
     @media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}#sidebar,#mobile-btn,#tab-nav,.noprint{display:none!important;}body{background:white!important;}#app{display:block!important;}#main-content{padding:16px 24px!important;}.tab-content{display:block!important;}.kpi-red{background:#ef4444!important;}.kpi-blue{background:#2563eb!important;}.kpi-orange{background:#f59e0b!important;}.ward-card{background:#facc15!important;}}
   </style>
@@ -272,7 +275,7 @@ function enterDashboard() {
   </aside>
 
   <!-- ═══ MAIN ═══════════════════════════════════════════ -->
-  <main style="flex:1;overflow-y:auto;padding:36px 48px;" id="main-content">
+  <main style="flex:1;overflow-y:auto;overflow-x:hidden;padding:36px 48px;" id="main-content">
 
     <!-- Header -->
     <header style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:16px;">
@@ -373,7 +376,7 @@ function enterDashboard() {
             <svg width="24" height="24" fill="none" stroke="#facc15" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
             DAYS SINCE LAST CLABSI EVENT
           </h2>
-          <div class="wgrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px;" id="ward-grid"></div>
+          <div class="wgrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;min-width:0;" id="ward-grid"></div>
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px;" id="ward-date-grid"></div>
         </div>
       </div>
@@ -503,6 +506,22 @@ function enterDashboard() {
 
 <div id="toast"></div>
 
+<!-- Mobile bottom nav for Feedback & Info -->
+<div id="mobile-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#020617;border-top:2px solid #1e293b;padding:8px 16px;z-index:999;justify-content:center;gap:12px;">
+  <button onclick="showPanel('dashboard')" id="mbn-dashboard" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;background:transparent;border:none;color:#94a3b8;font-family:Inter,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;border-radius:10px;transition:all .2s;">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </button>
+  <button onclick="showPanel('feedback')" id="mbn-feedback" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;background:transparent;border:none;color:#94a3b8;font-family:Inter,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;border-radius:10px;transition:all .2s;">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Feedback
+  </button>
+  <button onclick="showPanel('info')" id="mbn-info" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;background:transparent;border:none;color:#94a3b8;font-family:Inter,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;border-radius:10px;transition:all .2s;">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+    Info
+  </button>
+</div>
+
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxJyLYJ5s9VH94RfjMKIILbEN4_9kPntIQMFeou-8xlB7sPhg_MQ_QtT7XR-qUhSACI_A/exec';
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRhbKJs0H-N4AInALV71BNmmjXR2lUzWGuqu2gjGxz_YnbD4XYq4Mjpu0_l84PTc89AXkxw0Y7zZDnH/pub?gid=77045550&single=true&output=csv';
@@ -525,12 +544,27 @@ function showPanel(name) {
     document.getElementById('panel-'+p).style.display = p===name ? 'block' : 'none';
   });
   ['dashboard','feedback','info'].forEach(p => {
-    document.getElementById('snav-'+p).classList.toggle('active', p===name);
+    const sn = document.getElementById('snav-'+p);
+    if (sn) sn.classList.toggle('active', p===name);
   });
+  // Sync mobile bottom nav
+  ['dashboard','feedback','info'].forEach(p => {
+    const btn = document.getElementById('mbn-'+p);
+    if (btn) {
+      btn.style.color    = p===name ? '#facc15' : '#94a3b8';
+      btn.style.background = p===name ? 'rgba(255,255,255,0.08)' : 'transparent';
+    }
+  });
+  // Tab nav visibility
+  const tabNav = document.getElementById('tab-nav');
+  if (tabNav) tabNav.style.display = name==='dashboard' ? 'flex' : 'none';
   if (name==='dashboard') {
     if (trendChart) setTimeout(()=>trendChart.resize(),100);
     if (compChart)  setTimeout(()=>compChart.resize(),100);
   }
+  // Scroll to top
+  const mc = document.getElementById('main-content');
+  if (mc) mc.scrollTop = 0;
 }
 
 // ── DEPARTMENT ───────────────────────────────────────────
@@ -628,15 +662,13 @@ function renderTrend(monthly) {
   Chart.register(ChartDataLabels);
   trendChart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'CLABSI Rate',data:values,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.08)',borderWidth:6,pointBackgroundColor:values.map(v=>v>0&&v>=5?'#ef4444':'#f59e0b'),pointBorderColor:'#fff',pointBorderWidth:3,pointRadius:9,tension:.4,fill:true,
     datalabels:{
-          display: ctx => {
-            if (window.innerWidth < 600) return false; // hide all labels on mobile
-            return values[ctx.dataIndex] > 0;
-          },
-          formatter:v=>v.toFixed(2),
-          color:c=>values[c.dataIndex]>=5?'#b91c1c':'#92400e',
-          font:{size:11,weight:'900',family:'Inter'},
-          anchor:'end',align:'top',
-          offset:6,
+          display: ctx => values[ctx.dataIndex] > 0,
+          formatter: v => v.toFixed(1),
+          color: c => values[c.dataIndex]>=5 ? '#b91c1c' : '#92400e',
+          font: ctx => ({ size: window.innerWidth < 480 ? 7 : 10, weight:'900', family:'Inter' }),
+          anchor:'end', align:'top',
+          offset: window.innerWidth < 480 ? 1 : 5,
+          padding: window.innerWidth < 480 ? {top:1,bottom:1,left:2,right:2} : {top:3,bottom:3,left:5,right:5},
           padding:{top:2,bottom:2,left:3,right:3},
           backgroundColor:c=>values[c.dataIndex]>=5?'rgba(254,226,226,.9)':'rgba(254,243,199,.9)',
           borderRadius:6,borderWidth:1,
