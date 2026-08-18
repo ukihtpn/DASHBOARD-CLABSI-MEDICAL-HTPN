@@ -230,10 +230,57 @@
 function enterDashboard() {
   const s = document.getElementById('splash-screen');
   s.classList.add('splash-exit');
-  setTimeout(()=>{ s.style.display='none'; }, 700);
+  setTimeout(()=>{ s.style.display='none'; document.getElementById('login-gate').style.display='flex'; }, 700);
 }
 </script>
 
+
+<!-- ═══ LOGIN GATE (after splash) ═══ -->
+<div id="login-gate" style="display:none;position:fixed;inset:0;z-index:99998;background:radial-gradient(ellipse at 30% 30%,#1a0505,#020617);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#0f172a;border:1px solid #1e293b;border-radius:24px;padding:34px 30px;width:100%;max-width:380px;box-shadow:0 30px 60px rgba(0,0,0,.5);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+      <div style="width:42px;height:42px;background:linear-gradient(135deg,#dc2626,#991b1b);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+        <svg width="22" height="22" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div>
+        <p style="margin:0;color:white;font-weight:900;font-size:16px;">Sign In</p>
+        <p style="margin:0;color:#64748b;font-size:11px;font-weight:700;">CLABSI Tracker HTPN</p>
+      </div>
+    </div>
+
+    <label class="fl" style="margin-top:22px;">Login As</label>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button id="role-staff" onclick="pickRole('staff')" class="rolebtn active" style="flex:1;">👁️ Staff</button>
+      <button id="role-coord" onclick="pickRole('coordinator')" class="rolebtn" style="flex:1;">🔑 Coordinator</button>
+    </div>
+
+    <div id="coord-pw-wrap" style="display:none;margin-bottom:16px;">
+      <label class="fl">Coordinator Password</label>
+      <input id="coord-pw" type="password" class="fi" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+      <p id="pw-err" style="display:none;color:#ef4444;font-size:11px;font-weight:700;margin:8px 0 0;">❌ Wrong password. Try again.</p>
+    </div>
+
+    <button onclick="doLogin()" style="width:100%;background:linear-gradient(135deg,#f59e0b,#d97706);color:#1e293b;font-weight:900;font-size:14px;letter-spacing:.1em;text-transform:uppercase;padding:14px;border:none;border-radius:14px;cursor:pointer;box-shadow:0 8px 20px rgba(245,158,11,.35);">
+      Continue
+    </button>
+    <p style="color:#475569;font-size:10px;text-align:center;margin:16px 0 0;">Staff have view-only access. Coordinators can submit CVC audits.</p>
+  </div>
+</div>
+<style>
+  .rolebtn{padding:11px;border:2px solid #1e293b;background:#1e293b;color:#94a3b8;border-radius:12px;font-weight:900;font-size:12px;cursor:pointer;font-family:Inter,sans-serif;transition:all .2s;}
+  .rolebtn.active{background:#4f46e5;color:white;border-color:#4f46e5;}
+  #tab-audit .aud-item{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:13px;}
+  #tab-audit .aud-sec{background:#0f172a;color:#facc15;font-weight:900;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;border-radius:8px;margin:16px 0 4px;}
+  #tab-audit .yn{display:flex;gap:4px;}
+  #tab-audit .yn button{width:34px;height:30px;border:2px solid #e2e8f0;background:white;border-radius:8px;font-weight:900;font-size:11px;cursor:pointer;color:#94a3b8;}
+  #tab-audit .yn button.y{border-color:#16a34a;color:#16a34a;}
+  #tab-audit .yn button.n{border-color:#ef4444;color:#ef4444;}
+  #tab-audit .yn button.a{border-color:#64748b;color:#64748b;}
+  #tab-audit .yn button.on{color:white;}
+  #tab-audit .yn button.y.on{background:#16a34a;}
+  #tab-audit .yn button.n.on{background:#ef4444;}
+  #tab-audit .yn button.a.on{background:#64748b;}
+</style>
 
 <div id="loading-screen" style="position:fixed;inset:0;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:20px;">
   <div style="width:48px;height:48px;border:4px solid #e2e8f0;border-top-color:#4f46e5;border-radius:50%;" class="spin"></div>
@@ -360,6 +407,9 @@ function enterDashboard() {
         </button>
         <button class="tab-btn" id="tb-denom" onclick="switchTab('denom')">
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Line Listing Compliance (%)
+        </button>
+        <button class="tab-btn" id="tb-audit" onclick="switchTab('audit')" style="display:none;background:#0f172a;color:#facc15;">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/></svg>+ New CVC Audit
         </button>
       </div>
 
@@ -490,6 +540,47 @@ function enterDashboard() {
             </div>
             <canvas id="ll-chart"></canvas>
           </div></div>
+        </div>
+      </div>
+
+      <!-- ── TAB: CVC AUDIT (coordinator only) ── -->
+      <div id="tab-audit" class="tab-content">
+        <div style="background:white;padding:32px;border-radius:2.5rem;box-shadow:0 16px 32px rgba(0,0,0,.07);max-width:820px;margin:0 auto;">
+          <div style="background:#0f172a;color:white;padding:18px 22px;border-radius:1.5rem;margin-bottom:24px;">
+            <h2 style="font-size:16px;font-weight:900;margin:0 0 4px;">CVC CARE BUNDLE COMPLIANCE AUDIT</h2>
+            <p style="font-size:12px;color:#94a3b8;margin:0;">One form = one patient (RN). Saved to <strong style="color:#facc15;">CVC AUDIT LOG</strong>; monthly average auto-updates the compliance dashboard.</p>
+          </div>
+
+          <!-- Patient details -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px;">
+            <div><label class="fl">Date of Audit</label><input id="au-date" type="date" class="fi"></div>
+            <div><label class="fl">Ward</label>
+              <select id="au-ward" class="fi"><option value="">Select…</option><option>WAD 1</option><option>WAD 2</option><option>WAD 3</option><option>WAD 6</option></select>
+            </div>
+            <div><label class="fl">Patient RN</label><input id="au-rn" type="text" class="fi" placeholder="RN"></div>
+            <div><label class="fl">Auditor Name</label><input id="au-auditor" type="text" class="fi" placeholder="Auditor"></div>
+            <div><label class="fl">Site of Insertion</label>
+              <select id="au-site" class="fi"><option value="">—</option><option>Subclavian</option><option>IJV</option><option>Femoral</option></select>
+            </div>
+            <div><label class="fl">Day on CVC (D0=insertion)</label><input id="au-day" type="number" class="fi" placeholder="e.g. 3"></div>
+          </div>
+
+          <div id="au-items"><!-- items injected by JS --></div>
+
+          <!-- Live score -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:24px;">
+            <div style="background:#f8fafc;border-radius:16px;padding:16px;text-align:center;"><p style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Insertion %</p><p id="au-sc-ins" style="font-size:28px;font-weight:900;color:#0f172a;">—</p></div>
+            <div style="background:#f8fafc;border-radius:16px;padding:16px;text-align:center;"><p style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;">Maintenance %</p><p id="au-sc-mnt" style="font-size:28px;font-weight:900;color:#0f172a;">—</p></div>
+            <div style="background:#0f172a;border-radius:16px;padding:16px;text-align:center;"><p style="font-size:10px;font-weight:900;color:#facc15;text-transform:uppercase;">Overall %</p><p id="au-sc-all" style="font-size:28px;font-weight:900;color:white;">—</p></div>
+          </div>
+
+          <div><label class="fl" style="margin-top:20px;">Remarks / Corrective Actions</label><textarea id="au-remarks" class="fi" rows="3" placeholder="Optional"></textarea></div>
+
+          <button id="au-submit" onclick="submitAudit()" style="width:100%;margin-top:20px;background:linear-gradient(135deg,#16a34a,#15803d);color:white;font-weight:900;font-size:14px;letter-spacing:.08em;text-transform:uppercase;padding:16px;border:none;border-radius:16px;cursor:pointer;box-shadow:0 8px 20px rgba(22,163,74,.3);">
+            Save Audit &amp; Update Dashboard
+          </button>
+          <p id="au-ok" style="display:none;color:#16a34a;font-weight:800;text-align:center;margin-top:14px;">✅ Saved. Compliance dashboard updated.</p>
+          <p id="au-err" style="display:none;color:#ef4444;font-weight:800;text-align:center;margin-top:14px;">❌ Save failed. Check connection and try again.</p>
         </div>
       </div>
 
@@ -1099,6 +1190,177 @@ function showToast(msg) {
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ══ LOGIN GATE ═══════════════════════════════════════════
+let CURRENT_ROLE = 'staff';
+let LOGIN_ROLE_PICK = 'staff';
+function pickRole(r){
+  LOGIN_ROLE_PICK = r;
+  document.getElementById('role-staff').classList.toggle('active', r==='staff');
+  document.getElementById('role-coord').classList.toggle('active', r==='coordinator');
+  document.getElementById('coord-pw-wrap').style.display = r==='coordinator' ? 'block' : 'none';
+  document.getElementById('pw-err').style.display='none';
+}
+async function doLogin(){
+  if(LOGIN_ROLE_PICK==='staff'){ grantAccess('staff'); return; }
+  const pw = document.getElementById('coord-pw').value;
+  if(!pw){ document.getElementById('pw-err').textContent='❌ Enter password.'; document.getElementById('pw-err').style.display='block'; return; }
+  document.getElementById('pw-err').style.display='none';
+  const btn = event && event.target ? event.target : null;
+  try {
+    // GET (readable, not no-cors) so we can read the verify result.
+    // Password checked server-side in GAS — never stored in this file.
+    const params = new URLSearchParams({ action:'verifyCoordinator', password: pw });
+    const res = await fetch(GAS_URL + '?' + params.toString(), { method:'GET' });
+    const json = await res.json();
+    if(json && json.success && json.ok){ grantAccess('coordinator'); }
+    else { document.getElementById('pw-err').textContent='❌ Wrong password. Try again.'; document.getElementById('pw-err').style.display='block'; }
+  } catch(e){
+    document.getElementById('pw-err').textContent='❌ Cannot reach server. Check connection.'; document.getElementById('pw-err').style.display='block';
+  }
+}
+function grantAccess(role){
+  CURRENT_ROLE = role;
+  document.getElementById('login-gate').style.display='none';
+  document.getElementById('tb-audit').style.display = role==='coordinator' ? 'flex' : 'none';
+  if(role==='coordinator'){ renderAuditItems(); document.getElementById('au-date').value = new Date().toISOString().slice(0,10); }
+}
+
+// ══ CVC AUDIT FORM ═══════════════════════════════════════
+const INS_ITEMS = [
+  {t:'A1. HAND HYGIENE', h:1},
+  {t:'Operator performed hand hygiene immediately before procedure'},
+  {t:'A2. MAX BARRIER — OPERATOR', h:1},
+  {t:'Operator wore cap'},
+  {t:'Operator wore mask covering nose & mouth'},
+  {t:'Operator wore sterile gown'},
+  {t:'Operator wore sterile gloves'},
+  {t:'Full-body sterile drape covering whole patient'},
+  {t:'A3. MAX BARRIER — ASSISTANT', h:1},
+  {t:'Assistant wore cap'},
+  {t:'Assistant wore mask'},
+  {t:'Other personnel complied with full barrier precautions'},
+  {t:'A4. CHLORHEXIDINE ANTISEPSIS', h:1},
+  {t:'Site cleaned w/ chlorhexidine 2% in 70% alcohol & allowed to dry'},
+  {t:'A5. ENVIRONMENT & DOCUMENTATION', h:1},
+  {t:'All fans in procedure area turned off'},
+  {t:'Ultrasound guidance used'},
+  {t:'CVC Insertion Checklist completed, signed & filed'},
+];
+const MNT_ITEMS = [
+  {t:'B1. DAILY REVIEW & DOCUMENTATION', h:1},
+  {t:'CVC Maintenance Care Bundle Form available & up to date'},
+  {t:"Daily doctor's review documented (Keep/Remove)"},
+  {t:'Ongoing indication documented (F/D/V/T/M/Others)'},
+  {t:'Date of insertion documented / at bedside'},
+  {t:'B2. INSERTION SITE & DRESSING', h:1},
+  {t:'Site inspected daily & findings documented'},
+  {t:'Dressing clean, dry, intact & secure'},
+  {t:'Dressing changed according to schedule'},
+  {t:'B3. CATHETER & LINES', h:1},
+  {t:'All lumens functioning; non-functioning documented & escalated'},
+  {t:'Fever/pain assessed daily & documented'},
+  {t:'B4. REMOVAL', h:1},
+  {t:'CVC no longer indicated removed promptly w/ date & doctor'},
+];
+function renderAuditItems(){
+  const box = document.getElementById('au-items');
+  box.innerHTML =
+    '<div class="aud-sec" style="background:#dc2626;">PART A — INSERTION BUNDLE</div>' +
+    INS_ITEMS.map((it,i)=>rowHTML('ins',i,it)).join('') +
+    '<div class="aud-sec" style="background:#2563eb;">PART B — MAINTENANCE BUNDLE</div>' +
+    MNT_ITEMS.map((it,i)=>rowHTML('mnt',i,it)).join('');
+  recalcAudit();
+}
+function rowHTML(grp,i,it){
+  if(it.h) return `<div class="aud-sec">${it.t}</div>`;
+  const id = grp+'-'+i;
+  return `<div class="aud-item">
+    <span>${it.t}</span>
+    <div class="yn" data-id="${id}">
+      <button class="y" onclick="setYN('${id}','y',this)">Y</button>
+      <button class="n" onclick="setYN('${id}','n',this)">N</button>
+      <button class="a" onclick="setYN('${id}','a',this)">N/A</button>
+    </div></div>`;
+}
+const AUDIT_STATE = {};
+function setYN(id,val,btn){
+  AUDIT_STATE[id]=val;
+  btn.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  recalcAudit();
+}
+function scoreGroup(prefix, items){
+  let yes=0, applic=0;
+  items.forEach((it,i)=>{
+    if(it.h) return;
+    const v = AUDIT_STATE[prefix+'-'+i];
+    if(v==='y'){ yes++; applic++; }
+    else if(v==='n'){ applic++; }
+  });
+  return { yes, applic, pct: applic? +(yes/applic*100).toFixed(1) : null };
+}
+function recalcAudit(){
+  const ins = scoreGroup('ins', INS_ITEMS);
+  const mnt = scoreGroup('mnt', MNT_ITEMS);
+  const totYes = ins.yes+mnt.yes, totApp = ins.applic+mnt.applic;
+  const all = totApp? +(totYes/totApp*100).toFixed(1) : null;
+  document.getElementById('au-sc-ins').textContent = ins.pct==null?'—':ins.pct+'%';
+  document.getElementById('au-sc-mnt').textContent = mnt.pct==null?'—':mnt.pct+'%';
+  document.getElementById('au-sc-all').textContent = all==null?'—':all+'%';
+  return { ins, mnt, all };
+}
+async function submitAudit(){
+  const date=document.getElementById('au-date').value;
+  const ward=document.getElementById('au-ward').value;
+  const rn=document.getElementById('au-rn').value.trim();
+  if(!date||!ward||!rn){ alert('Please fill Date, Ward and Patient RN.'); return; }
+  const sc = recalcAudit();
+  const btn=document.getElementById('au-submit');
+  document.getElementById('au-ok').style.display='none';
+  document.getElementById('au-err').style.display='none';
+  btn.textContent='Saving...'; btn.disabled=true;
+
+  // Build per-item results for the log
+  const items={};
+  INS_ITEMS.forEach((it,i)=>{ if(!it.h) items['INS'+i]=AUDIT_STATE['ins-'+i]||''; });
+  MNT_ITEMS.forEach((it,i)=>{ if(!it.h) items['MNT'+i]=AUDIT_STATE['mnt-'+i]||''; });
+
+  const payload = {
+    action:'saveCvcAudit',
+    data:{
+      date, ward, rn,
+      auditor: document.getElementById('au-auditor').value.trim(),
+      site: document.getElementById('au-site').value,
+      day: document.getElementById('au-day').value,
+      insertionPct: sc.ins.pct, maintenancePct: sc.mnt.pct, overallPct: sc.all,
+      insYes: sc.ins.yes, insApplic: sc.ins.applic,
+      mntYes: sc.mnt.yes, mntApplic: sc.mnt.applic,
+      remarks: document.getElementById('au-remarks').value.trim(),
+      items
+    }
+  };
+  try {
+    // GET with JSON payload param → readable response, avoids no-cors CORS block
+    const params = new URLSearchParams({ action:'saveCvcAudit', payload: JSON.stringify(payload.data) });
+    const res = await fetch(GAS_URL + '?' + params.toString(), { method:'GET' });
+    const json = await res.json();
+    if(json && json.success){
+      document.getElementById('au-ok').style.display='block';
+      // reset form
+      AUDIT_STATE && Object.keys(AUDIT_STATE).forEach(k=>delete AUDIT_STATE[k]);
+      document.querySelectorAll('#au-items .yn button').forEach(b=>b.classList.remove('on'));
+      ['au-rn','au-auditor','au-day','au-remarks'].forEach(id=>document.getElementById(id).value='');
+      recalcAudit();
+      loadComplianceData(); // refresh dashboard with new monthly average
+    } else {
+      document.getElementById('au-err').style.display='block';
+    }
+  } catch(e){
+    document.getElementById('au-err').style.display='block';
+  }
+  btn.textContent='Save Audit & Update Dashboard'; btn.disabled=false;
 }
 </script>
 
