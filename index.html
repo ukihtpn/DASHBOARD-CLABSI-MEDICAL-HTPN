@@ -260,7 +260,12 @@ function enterDashboard() {
       <p id="pw-err" style="display:none;color:#ef4444;font-size:11px;font-weight:700;margin:8px 0 0;">❌ Wrong password. Try again.</p>
     </div>
 
-    <button onclick="doLogin()" style="width:100%;background:linear-gradient(135deg,#f59e0b,#d97706);color:#1e293b;font-weight:900;font-size:14px;letter-spacing:.1em;text-transform:uppercase;padding:14px;border:none;border-radius:14px;cursor:pointer;box-shadow:0 8px 20px rgba(245,158,11,.35);">
+    <label style="display:flex;align-items:center;gap:9px;margin:16px 0 4px;cursor:pointer;">
+      <input id="remember-me" type="checkbox" style="width:16px;height:16px;accent-color:#f59e0b;cursor:pointer;">
+      <span style="color:#94a3b8;font-size:12px;font-weight:700;">Remember me on this device</span>
+    </label>
+
+    <button onclick="doLogin()" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#1e293b;font-weight:900;font-size:14px;letter-spacing:.1em;text-transform:uppercase;padding:14px;border:none;border-radius:14px;cursor:pointer;box-shadow:0 8px 20px rgba(245,158,11,.35);">
       Continue
     </button>
     <p style="color:#475569;font-size:10px;text-align:center;margin:16px 0 0;">Staff have view-only access. Coordinators can submit CVC audits.</p>
@@ -342,7 +347,10 @@ function enterDashboard() {
       </button>
     </div>
 
-    <div style="margin-top:auto;padding-top:16px;border-top:1px solid #1e293b;font-size:9px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.15em;text-align:center;margin-top:24px;">HTPN Infection Control</div>
+    <div style="margin-top:auto;padding-top:16px;border-top:1px solid #1e293b;text-align:center;margin-top:24px;">
+      <button onclick="logout()" style="background:transparent;border:1px solid #334155;color:#94a3b8;font-family:Inter,sans-serif;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:8px 16px;border-radius:10px;cursor:pointer;margin-bottom:12px;width:100%;">🔒 Log Out</button>
+      <div style="font-size:9px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.15em;">HTPN Infection Control</div>
+    </div>
   </aside>
 
   <!-- ═══ MAIN ═══════════════════════════════════════════ -->
@@ -407,6 +415,9 @@ function enterDashboard() {
         </button>
         <button class="tab-btn" id="tb-denom" onclick="switchTab('denom')">
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Line Listing Compliance (%)
+        </button>
+        <button class="tab-btn" id="tb-auditlog" onclick="switchTab('auditlog')">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Audit Log
         </button>
         <button class="tab-btn" id="tb-audit" onclick="switchTab('audit')" style="display:none;background:#0f172a;color:#facc15;">
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/></svg>+ New CVC Audit
@@ -540,6 +551,43 @@ function enterDashboard() {
             </div>
             <canvas id="ll-chart"></canvas>
           </div></div>
+        </div>
+      </div>
+
+      <!-- ── TAB: AUDIT LOG (view what has been submitted) ── -->
+      <div id="tab-auditlog" class="tab-content">
+        <div style="background:white;padding:36px;border-radius:2.5rem;box-shadow:0 16px 32px rgba(0,0,0,.07);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+            <div>
+              <h3 style="font-weight:900;color:#0f172a;text-transform:uppercase;font-size:16px;margin-bottom:4px;">CVC Audit Log</h3>
+              <p style="font-size:13px;color:#64748b;font-weight:600;">Every CVC audit submitted, latest first. Read-only.</p>
+            </div>
+            <button onclick="loadAuditLog()" style="display:flex;align-items:center;gap:7px;padding:10px 18px;background:#f1f5f9;border:none;border-radius:12px;font-family:Inter,sans-serif;font-size:12px;font-weight:700;cursor:pointer;color:#334155;">
+              <svg id="auditlog-ri" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              Refresh
+            </button>
+          </div>
+          <div id="auditlog-empty" style="display:none;text-align:center;padding:50px 20px;color:#94a3b8;">
+            <svg width="40" height="40" fill="none" stroke="#cbd5e1" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 10px;display:block;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <p style="font-size:13px;font-weight:700;">No audits submitted yet.</p>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <thead>
+                <tr style="background:#0f172a;color:#facc15;">
+                  <th style="padding:10px 12px;text-align:left;font-weight:900;text-transform:uppercase;font-size:10px;letter-spacing:.05em;white-space:nowrap;">Date</th>
+                  <th style="padding:10px 12px;text-align:left;font-weight:900;text-transform:uppercase;font-size:10px;letter-spacing:.05em;white-space:nowrap;">Ward</th>
+                  <th style="padding:10px 12px;text-align:left;font-weight:900;text-transform:uppercase;font-size:10px;letter-spacing:.05em;white-space:nowrap;">Patient RN</th>
+                  <th style="padding:10px 12px;text-align:left;font-weight:900;text-transform:uppercase;font-size:10px;letter-spacing:.05em;white-space:nowrap;">Auditor</th>
+                  <th style="padding:10px 12px;text-align:center;font-weight:900;text-transform:uppercase;font-size:10px;letter-spacing:.05em;white-space:nowrap;">Insertion %</th>
+                  <th style="padding:10px 12px;text-align:center;font-weight:900;text-transform:uppercase;font-size:10px;letter-spacing:.05em;white-space:nowrap;">Maintenance %</th>
+                  <th style="padding:10px 12px;text-align:center;font-weight:900;text-transform:uppercase;font-size:10px;letter-spacing:.05em;white-space:nowrap;">Overall %</th>
+                  <th style="padding:10px 12px;text-align:left;font-weight:900;text-transform:uppercase;font-size:10px;letter-spacing:.05em;">Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="auditlog-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -695,6 +743,25 @@ const WARDS    = ['WAD 1','WAD 2','WAD 3','WAD 6'];
 const QC       = ['#2563eb','#8b5cf6','#ec4899','#f97316'];
 const Q_LABELS = ['Q1','Q2','Q3','Q4'];
 
+// ── REMEMBER ME — check for a saved login before anything else runs ──
+let CURRENT_ROLE = 'staff';
+let LOGIN_ROLE_PICK = 'staff';
+(function(){
+  try{
+    const raw = localStorage.getItem('clabsi_remember');
+    if(!raw) return;
+    const saved = JSON.parse(raw);
+    const THIRTY_DAYS = 30*24*60*60*1000;
+    if(!saved || !saved.role || !((Date.now()-saved.ts) <= THIRTY_DAYS)){
+      localStorage.removeItem('clabsi_remember');
+      return;
+    }
+    const sp = document.getElementById('splash-screen');
+    if(sp) sp.style.display='none';
+    grantAccess(saved.role, true); // true = refresh the 30-day window on use
+  }catch(e){}
+})();
+
 let trendChart=null, compChart=null, denomChart=null, llChart=null;
 let compData=null, curBundle='insertion', denomData=null, llData=null;
 
@@ -767,6 +834,7 @@ function switchTab(id) {
     setTimeout(()=>{ if(denomChart) denomChart.resize(); if(llChart) llChart.resize(); },100);
     loadLineListingAll();
   }
+  if(id==='auditlog') loadAuditLog();
 }
 
 // ── CSV DATA ──────────────────────────────────────────────
@@ -1155,6 +1223,50 @@ async function submitFeedback() {
   btn.textContent='Submit Feedback'; btn.disabled=false;
 }
 
+// ── AUDIT LOG — view what has been submitted ──────────────
+async function loadAuditLog() {
+  const ri = document.getElementById('auditlog-ri');
+  if(ri) ri.classList.add('spin');
+  try {
+    const r = await callGAS({ action:'getCvcAuditLog' });
+    if(r.success && r.data) renderAuditLogTable(r.data);
+    else renderAuditLogTable([]);
+  } catch(e){
+    console.warn('GAS audit log:', e);
+    renderAuditLogTable([]);
+  }
+  if(ri) ri.classList.remove('spin');
+}
+function renderAuditLogTable(records) {
+  const body = document.getElementById('auditlog-tbody');
+  const empty = document.getElementById('auditlog-empty');
+  if(!body) return;
+  records = records || [];
+  if(!records.length){
+    body.innerHTML='';
+    if(empty) empty.style.display='block';
+    return;
+  }
+  if(empty) empty.style.display='none';
+  const pctCell = v => {
+    if(v===null||v===undefined||v==='') return '<span style="color:#94a3b8;">—</span>';
+    const n=parseFloat(v);
+    const ok = n>=80;
+    return `<span style="font-weight:900;color:${ok?'#16a34a':'#dc2626'};">${n.toFixed(1)}%</span>`;
+  };
+  body.innerHTML = records.map((rec,i)=>`
+    <tr style="border-bottom:1px solid #f1f5f9;background:${i%2===0?'#ffffff':'#f8fafc'};">
+      <td style="padding:9px 12px;white-space:nowrap;color:#334155;font-weight:700;">${rec.date||''}</td>
+      <td style="padding:9px 12px;white-space:nowrap;color:#334155;">${rec.ward||''}</td>
+      <td style="padding:9px 12px;white-space:nowrap;color:#334155;">${rec.rn||''}</td>
+      <td style="padding:9px 12px;white-space:nowrap;color:#64748b;">${rec.auditor||''}</td>
+      <td style="padding:9px 12px;text-align:center;">${pctCell(rec.insertionPct)}</td>
+      <td style="padding:9px 12px;text-align:center;">${pctCell(rec.maintenancePct)}</td>
+      <td style="padding:9px 12px;text-align:center;">${pctCell(rec.overallPct)}</td>
+      <td style="padding:9px 12px;color:#64748b;max-width:260px;">${rec.remarks||''}</td>
+    </tr>`).join('');
+}
+
 // ── UTILITIES ─────────────────────────────────────────────
 async function callGAS(p) {
   const r=await fetch(GAS_URL,{method:'POST',body:JSON.stringify(p)});
@@ -1193,8 +1305,8 @@ function showToast(msg) {
 }
 
 // ══ LOGIN GATE ═══════════════════════════════════════════
-let CURRENT_ROLE = 'staff';
-let LOGIN_ROLE_PICK = 'staff';
+// (CURRENT_ROLE / LOGIN_ROLE_PICK are declared near the top of this
+// script so the remember-me check can run before this point.)
 function pickRole(r){
   LOGIN_ROLE_PICK = r;
   document.getElementById('role-staff').classList.toggle('active', r==='staff');
@@ -1203,28 +1315,40 @@ function pickRole(r){
   document.getElementById('pw-err').style.display='none';
 }
 async function doLogin(){
-  if(LOGIN_ROLE_PICK==='staff'){ grantAccess('staff'); return; }
+  const remember = document.getElementById('remember-me')?.checked || false;
+  if(LOGIN_ROLE_PICK==='staff'){ grantAccess('staff', remember); return; }
   const pw = document.getElementById('coord-pw').value;
   if(!pw){ document.getElementById('pw-err').textContent='❌ Enter password.'; document.getElementById('pw-err').style.display='block'; return; }
   document.getElementById('pw-err').style.display='none';
-  const btn = event && event.target ? event.target : null;
   try {
     // GET (readable, not no-cors) so we can read the verify result.
     // Password checked server-side in GAS — never stored in this file.
     const params = new URLSearchParams({ action:'verifyCoordinator', password: pw });
     const res = await fetch(GAS_URL + '?' + params.toString(), { method:'GET' });
     const json = await res.json();
-    if(json && json.success && json.ok){ grantAccess('coordinator'); }
+    if(json && json.success && json.ok){ grantAccess('coordinator', remember); }
     else { document.getElementById('pw-err').textContent='❌ Wrong password. Try again.'; document.getElementById('pw-err').style.display='block'; }
   } catch(e){
     document.getElementById('pw-err').textContent='❌ Cannot reach server. Check connection.'; document.getElementById('pw-err').style.display='block';
   }
 }
-function grantAccess(role){
+function grantAccess(role, remember){
   CURRENT_ROLE = role;
-  document.getElementById('login-gate').style.display='none';
-  document.getElementById('tb-audit').style.display = role==='coordinator' ? 'flex' : 'none';
-  if(role==='coordinator'){ renderAuditItems(); document.getElementById('au-date').value = new Date().toISOString().slice(0,10); }
+  const lg = document.getElementById('login-gate');
+  if(lg) lg.style.display='none';
+  const tb = document.getElementById('tb-audit');
+  if(tb) tb.style.display = role==='coordinator' ? 'flex' : 'none';
+  if(role==='coordinator' && document.getElementById('au-items')){
+    renderAuditItems();
+    document.getElementById('au-date').value = new Date().toISOString().slice(0,10);
+  }
+  if(remember){
+    try{ localStorage.setItem('clabsi_remember', JSON.stringify({ role: role, ts: Date.now() })); }catch(e){}
+  }
+}
+function logout(){
+  try{ localStorage.removeItem('clabsi_remember'); }catch(e){}
+  location.reload();
 }
 
 // ══ CVC AUDIT FORM ═══════════════════════════════════════
@@ -1354,6 +1478,7 @@ async function submitAudit(){
       ['au-rn','au-auditor','au-day','au-remarks'].forEach(id=>document.getElementById(id).value='');
       recalcAudit();
       loadComplianceData(); // refresh dashboard with new monthly average
+      loadAuditLog(); // refresh the Audit Log table
     } else {
       document.getElementById('au-err').style.display='block';
     }
