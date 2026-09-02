@@ -1754,6 +1754,7 @@ const MNT_ITEMS = [
   {t:'CVC no longer indicated removed promptly w/ date & doctor'},
 ];
 let CURRENT_DRAFT_ID = null;
+let CURRENT_SESSION_RN = null; // which patient's answers are currently loaded in the checklist
 const AUDIT_STATE  = {}; // {'ins-0':'y', ...}
 const REMARK_STATE = {}; // {'ins-0':'text', ...}
 const PHOTO_STATE  = {}; // {'ins-0':[{type:'new',dataUrl,mime}|{type:'existing',url}], ...}
@@ -1767,6 +1768,23 @@ function handleAuditNext(){
   const doMnt = document.getElementById('au-do-mnt').checked;
   if(!ward || !rn){ errEl.textContent='Please fill in Ward and Patient RN first.'; errEl.style.display='block'; return; }
   if(!doIns && !doMnt){ errEl.textContent='Tick at least one bundle to audit.'; errEl.style.display='block'; return; }
+
+  const formOpen = document.getElementById('au-form-body').style.display === 'block';
+  const hasWork = Object.keys(AUDIT_STATE).length>0 || Object.keys(REMARK_STATE).length>0 || Object.keys(PHOTO_STATE).length>0;
+  if (formOpen && hasWork && CURRENT_SESSION_RN && rn !== CURRENT_SESSION_RN) {
+    const keep = confirm(
+      `You have unsaved checklist answers for ${CURRENT_SESSION_RN} that haven't been saved as a draft.\n\n` +
+      `Switching to RN "${rn}" now will discard them.\n\n` +
+      `Tap Cancel and use "💾 Save Draft" first if you want to keep it — or OK to discard and start fresh.`
+    );
+    if (!keep) return;
+    Object.keys(AUDIT_STATE).forEach(k=>delete AUDIT_STATE[k]);
+    Object.keys(REMARK_STATE).forEach(k=>delete REMARK_STATE[k]);
+    Object.keys(PHOTO_STATE).forEach(k=>delete PHOTO_STATE[k]);
+    CURRENT_DRAFT_ID = null;
+  }
+
+  CURRENT_SESSION_RN = rn;
   renderAuditItems();
   document.getElementById('au-form-body').style.display='block';
 }
@@ -2015,6 +2033,7 @@ function resetAuditForm(){
   Object.keys(REMARK_STATE).forEach(k=>delete REMARK_STATE[k]);
   Object.keys(PHOTO_STATE).forEach(k=>delete PHOTO_STATE[k]);
   CURRENT_DRAFT_ID = null;
+  CURRENT_SESSION_RN = null;
   ['au-rn','au-auditor','au-day','au-remarks'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('au-do-ins').checked = true;
   document.getElementById('au-do-mnt').checked = true;
@@ -2051,13 +2070,36 @@ async function loadDraftsList(){
   }catch(e){ console.warn('drafts:', e); }
 }
 
+// True if the checklist is showing AND the coordinator has started
+// filling it in for a patient that isn't the one already loaded from
+// a saved draft — i.e. work that would be silently lost if we jump
+// to a different draft/patient right now.
+function hasUnsavedAuditWork(targetDraftId){
+  if (targetDraftId && CURRENT_DRAFT_ID === targetDraftId) return false; // re-opening the same draft is fine
+  const formOpen = document.getElementById('au-form-body')?.style.display === 'block';
+  if (!formOpen) return false;
+  return Object.keys(AUDIT_STATE).length > 0
+      || Object.keys(REMARK_STATE).length > 0
+      || Object.keys(PHOTO_STATE).length > 0;
+}
+
 async function resumeDraft(draftId){
+  if (hasUnsavedAuditWork(draftId)) {
+    const rn = document.getElementById('au-rn')?.value || 'this patient';
+    const keep = confirm(
+      `You have unsaved work for ${rn} that hasn't been saved as a draft yet.\n\n` +
+      `Opening another audit now will discard it.\n\n` +
+      `Tap Cancel and use "💾 Save Draft" first if you want to keep it — or OK to discard and continue.`
+    );
+    if (!keep) return;
+  }
   try{
     const r = await callGAS({ action:'getCvcAuditDraft', draftId });
     if(!r || !r.success){ alert(r && r.error ? r.error : 'Could not load draft.'); return; }
     const d = r.data;
     resetAuditForm();
     CURRENT_DRAFT_ID = d.draftId;
+    CURRENT_SESSION_RN = d.rn || null;
     document.getElementById('au-date').value = d.date || '';
     document.getElementById('au-ward').value = d.ward || '';
     document.getElementById('au-rn').value = d.rn || '';
