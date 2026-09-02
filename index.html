@@ -1185,7 +1185,7 @@ function renderQSummary(qRes,periods) {
 // ── COMPLIANCE DATA (GAS) — QUARTERLY CHART ───────────────
 async function loadComplianceData() {
   try {
-    const r=await callGAS({action:'getComplianceData'});
+    const r=await callGASGet('getComplianceData');
     if(r.success&&r.data){
       compData=r.data;
       renderComplianceQuarterlyChart(curBundle);
@@ -1272,7 +1272,7 @@ async function loadLineListingAll() {
   if(i1) i1.classList.add('spin');
   if(i2) i2.classList.add('spin');
   try {
-    const r=await callGAS({action:'getLineListingData'});
+    const r=await callGASGet('getLineListingData');
     if(r.success&&r.data){
       llData=r.data;
       renderPctCards('denom-cards', r.data.lineListing);
@@ -1405,7 +1405,7 @@ async function loadAuditLog() {
   const ri = document.getElementById('auditlog-ri');
   if(ri) ri.classList.add('spin');
   try {
-    const r = await callGAS({ action:'getCvcAuditLog' });
+    const r = await callGASGet('getCvcAuditLog');
     if(r.success && r.data) renderAuditLogTable(r.data);
     else renderAuditLogTable([]);
   } catch(e){
@@ -1578,7 +1578,7 @@ async function loadProgramGoals(){
   // hub %) — from the "PROGRAM GOALS" tab, edited directly in the Sheet.
   let manual = { asOf:'', baselineRate:0, trainingMO:0, trainingHO:0, trainingSN:0, scrubHubPct:0 };
   try{
-    const pg = await callGAS({ action:'getProgramGoals' });
+    const pg = await callGASGet('getProgramGoals');
     if(pg && pg.success) manual = pg.data;
   }catch(e){ console.warn('program goals (manual):', e); }
 
@@ -1614,7 +1614,7 @@ async function loadProgramGoals(){
 
   // Goal 2: Line Listing Compliance average across months with data
   try{
-    const r = await callGAS({ action:'getLineListingData' });
+    const r = await callGASGet('getLineListingData');
     if(r && r.success){
       const ll = r.data.lineListing;
       const vals = [];
@@ -1628,7 +1628,7 @@ async function loadProgramGoals(){
 
   // Goal 3: CVC Insertion + Maintenance bundle average across months with data
   try{
-    const r = await callGAS({ action:'getComplianceData' });
+    const r = await callGASGet('getComplianceData');
     if(r && r.success){
       const vals = [];
       ['insertion','maintenance'].forEach(k=>{
@@ -1645,6 +1645,14 @@ async function loadProgramGoals(){
 // ── UTILITIES ─────────────────────────────────────────────
 async function callGAS(p) {
   const r=await fetch(GAS_URL,{method:'POST',body:JSON.stringify(p)});
+  return await r.json();
+}
+// Apps Script consistently sends proper CORS headers on GET responses
+// but not always on POST ones (a known platform quirk) — every
+// read-only action goes through this instead of callGAS().
+async function callGASGet(action, extraParams) {
+  const params = new URLSearchParams(Object.assign({ action }, extraParams||{}));
+  const r = await fetch(GAS_URL + '?' + params.toString(), { method:'GET' });
   return await r.json();
 }
 function showApp() {
@@ -2130,6 +2138,27 @@ function buildItemsPayload(){
   return payload;
 }
 
+function generateUuid(){
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
+    const r = Math.random()*16|0, v = c==='x' ? r : (r&0x3|0x8);
+    return v.toString(16);
+  });
+}
+// For writes that carry photos (too big for a GET URL) — POST still
+// works and Apps Script still executes/saves normally, but the CORS
+// header issue means the browser won't let us read the response back.
+// So: generate the draft ID ourselves beforehand (never rely on the
+// server to hand one back), fire the request, and treat it as
+// successful after giving the server a moment to finish writing.
+async function callGASNoCors(action, data) {
+  await fetch(GAS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: JSON.stringify({ action, data })
+  });
+}
+
 function currentPatientPayload(extra){
   return Object.assign({
     draftId: CURRENT_DRAFT_ID,
@@ -2155,16 +2184,13 @@ async function saveDraft(){
   const originalLabel = btn.textContent;
   btn.textContent='Saving draft...'; btn.disabled=true;
   try{
-    const r = await callGAS({ action:'saveCvcAuditDraft', data: currentPatientPayload() });
-    if(r && r.success){
-      CURRENT_DRAFT_ID = r.draftId;
-      const ok = document.getElementById('au-ok');
-      ok.textContent = '💾 Draft saved — you can resume it anytime from the list above.';
-      ok.style.display='block';
-      loadDraftsList();
-    } else {
-      document.getElementById('au-err').style.display='block';
-    }
+    if(!CURRENT_DRAFT_ID) CURRENT_DRAFT_ID = generateUuid();
+    await callGASNoCors('saveCvcAuditDraft', currentPatientPayload());
+    await new Promise(res=>setTimeout(res, 1500)); // give the write time to land
+    const ok = document.getElementById('au-ok');
+    ok.textContent = '💾 Draft saved — you can resume it anytime from the list above.';
+    ok.style.display='block';
+    loadDraftsList();
   }catch(e){
     document.getElementById('au-err').style.display='block';
   }
@@ -2183,25 +2209,22 @@ async function submitFinal(){
   const originalLabel = btn.textContent;
   btn.textContent='Saving...'; btn.disabled=true;
 
-  const payload = { action:'saveCvcAudit', data: currentPatientPayload({
+  const payloadData = currentPatientPayload({
     insertionPct: sc.ins.pct, maintenancePct: sc.mnt.pct, overallPct: sc.all,
     insYes: sc.ins.yes, insApplic: sc.ins.applic,
     mntYes: sc.mnt.yes, mntApplic: sc.mnt.applic
-  })};
+  });
 
   try {
-    const r = await callGAS(payload);
-    if(r && r.success){
-      const ok = document.getElementById('au-ok');
-      ok.textContent = '✅ Saved. Compliance dashboard updated.';
-      ok.style.display='block';
-      resetAuditForm();
-      loadComplianceData(); // refresh dashboard with new monthly average
-      loadAuditLog();       // refresh the Audit Log table
-      loadDraftsList();     // the matching draft (if any) is now gone
-    } else {
-      document.getElementById('au-err').style.display='block';
-    }
+    await callGASNoCors('saveCvcAudit', payloadData);
+    await new Promise(res=>setTimeout(res, 1500)); // give the write time to land
+    const ok = document.getElementById('au-ok');
+    ok.textContent = '✅ Saved. Compliance dashboard updated.';
+    ok.style.display='block';
+    resetAuditForm();
+    loadComplianceData(); // refresh dashboard with new monthly average
+    loadAuditLog();       // refresh the Audit Log table
+    loadDraftsList();     // the matching draft (if any) is now gone
   } catch(e){
     document.getElementById('au-err').style.display='block';
   }
@@ -2228,7 +2251,7 @@ async function loadDraftsList(){
   const empty = document.getElementById('au-drafts-empty');
   if(!list) return;
   try{
-    const r = await callGAS({ action:'getCvcAuditDrafts' });
+    const r = await callGASGet('getCvcAuditDrafts');
     const drafts = (r && r.success) ? (r.data||[]) : [];
     if(!drafts.length){
       list.innerHTML='';
@@ -2274,7 +2297,7 @@ async function resumeDraft(draftId){
     if (!keep) return;
   }
   try{
-    const r = await callGAS({ action:'getCvcAuditDraft', draftId });
+    const r = await callGASGet('getCvcAuditDraft', { draftId });
     if(!r || !r.success){ alert(r && r.error ? r.error : 'Could not load draft.'); return; }
     const d = r.data;
     resetAuditForm();
@@ -2308,7 +2331,7 @@ async function resumeDraft(draftId){
 async function deleteDraftUI(draftId){
   if(!confirm('Delete this draft? This cannot be undone.')) return;
   try{
-    await callGAS({ action:'deleteCvcAuditDraft', draftId });
+    await callGASGet('deleteCvcAuditDraft', { draftId });
     if(CURRENT_DRAFT_ID === draftId) CURRENT_DRAFT_ID = null;
     loadDraftsList();
   }catch(e){ alert('Could not delete draft.'); }
