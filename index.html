@@ -663,6 +663,21 @@ function enterDashboard() {
               <p style="font-size:12px;color:#94a3b8;margin:0;">One form = one patient (RN). Saved to <strong style="color:#facc15;">CVC AUDIT LOG</strong>; monthly average auto-updates the compliance dashboard.</p>
             </div>
 
+            <!-- Scan patient label (optional) -->
+            <div style="margin-bottom:18px;">
+              <label class="fl">Scan Patient Label (optional)</label>
+              <p style="font-size:11px;color:#94a3b8;margin:4px 0 8px;">Takes a photo of the wristband/label and tries to auto-fill RN, Name &amp; Admission Date below — always verify against the label after scanning.</p>
+              <div style="display:flex;gap:8px;">
+                <label class="aud-photo-btn" style="cursor:pointer;">📷 Camera
+                  <input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleLabelScan(this.files); this.value='';">
+                </label>
+                <label class="aud-photo-btn" style="cursor:pointer;">🖼️ Gallery
+                  <input type="file" accept="image/*" style="display:none" onchange="handleLabelScan(this.files); this.value='';">
+                </label>
+              </div>
+              <p id="au-scan-status" style="display:none;font-size:11px;font-weight:700;color:#64748b;margin-top:8px;"></p>
+            </div>
+
             <!-- Patient details -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px;">
               <div><label class="fl">Date of Audit</label><input id="au-date" type="date" class="fi"></div>
@@ -670,7 +685,18 @@ function enterDashboard() {
                 <select id="au-ward" class="fi"><option value="">Select…</option><option>WAD 1</option><option>WAD 2</option><option>WAD 3</option><option>WAD 6</option></select>
               </div>
               <div><label class="fl">Patient RN</label><input id="au-rn" type="text" class="fi" placeholder="RN"></div>
-              <div><label class="fl">Auditor Name</label><input id="au-auditor" type="text" class="fi" placeholder="Auditor"></div>
+              <div><label class="fl">Patient Full Name</label><input id="au-patient-name" type="text" class="fi" placeholder="Full name"></div>
+              <div><label class="fl">Date of Admission</label><input id="au-admission-date" type="date" class="fi"></div>
+              <div><label class="fl">Auditor Name</label>
+                <select id="au-auditor" class="fi">
+                  <option value="">Select…</option>
+                  <option>Dr. Aneesa Tharek</option>
+                  <option>Dr. Saihah</option>
+                  <option>ICN Maria</option>
+                  <option>ICN Mariam</option>
+                  <option>ICN Rosena</option>
+                </select>
+              </div>
               <div><label class="fl">Site of Insertion</label>
                 <select id="au-site" class="fi"><option value="">—</option><option>Subclavian</option><option>IJV</option><option>Femoral</option></select>
               </div>
@@ -1759,6 +1785,93 @@ const AUDIT_STATE  = {}; // {'ins-0':'y', ...}
 const REMARK_STATE = {}; // {'ins-0':'text', ...}
 const PHOTO_STATE  = {}; // {'ins-0':[{type:'new',dataUrl,mime}|{type:'existing',url}], ...}
 
+// ── PATIENT LABEL SCAN (OCR) — optional, client-side only ────────
+// Uses Tesseract.js (loaded on first use only, not on page load) to
+// read text off a photo of the patient wristband/label, entirely in
+// the browser — the photo never leaves the device. Best-effort only:
+// auto-fills empty RN/Name/Admission fields, but the coordinator must
+// still verify against the physical label.
+let TESSERACT_LOADING = null;
+function loadTesseractScript(){
+  if (window.Tesseract) return Promise.resolve();
+  if (TESSERACT_LOADING) return TESSERACT_LOADING;
+  TESSERACT_LOADING = new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.onload = ()=>resolve();
+    s.onerror = ()=>reject(new Error('Could not load the OCR library — check your connection.'));
+    document.head.appendChild(s);
+  });
+  return TESSERACT_LOADING;
+}
+
+function parseOcrText(text){
+  const lines = String(text||'').split('\n').map(l=>l.trim()).filter(Boolean);
+  let rn = '', name = '', admission = '';
+
+  for (const line of lines) {
+    const m = line.match(/(?:RN|MRN|REG(?:ISTRATION)?\s*NO\.?)\s*[:\-]?\s*([A-Z0-9\-]{5,15})/i);
+    if (m) { rn = m[1]; break; }
+  }
+  if (!rn) {
+    for (const line of lines) {
+      const m = line.match(/\b(\d{6,12})\b/);
+      if (m) { rn = m[1]; break; }
+    }
+  }
+
+  for (const line of lines) {
+    const m = line.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/);
+    if (m) {
+      let d = m[1].padStart(2,'0'), mo = m[2].padStart(2,'0'), y = m[3];
+      if (y.length === 2) y = '20'+y;
+      admission = `${y}-${mo}-${d}`;
+      break;
+    }
+  }
+
+  let bestName = '';
+  for (const line of lines) {
+    const clean = line.replace(/[^A-Za-z\s.@]/g, '').trim();
+    if (clean.length > bestName.length && clean.length >= 5 &&
+        /^[A-Z\s.@]+$/.test(clean) && !/RN|MRN|WARD|DATE|ADMIS|HOSPITAL|HTPN/i.test(clean)) {
+      bestName = clean;
+    }
+  }
+  name = bestName;
+
+  return { rn, name, admission };
+}
+
+async function handleLabelScan(fileList){
+  const file = fileList && fileList[0];
+  if (!file) return;
+  const statusEl = document.getElementById('au-scan-status');
+  const setStatus = (txt) => { if(statusEl){ statusEl.textContent = txt; statusEl.style.display='block'; } };
+  setStatus('🔍 Loading OCR…');
+  try {
+    await loadTesseractScript();
+    setStatus('🔍 Scanning label…');
+    const { data: { text } } = await Tesseract.recognize(file, 'eng');
+    const parsed = parseOcrText(text);
+
+    const rnEl   = document.getElementById('au-rn');
+    const nameEl = document.getElementById('au-patient-name');
+    const admEl  = document.getElementById('au-admission-date');
+    const filled = [];
+    if (parsed.rn && !rnEl.value.trim())     { rnEl.value = parsed.rn;     filled.push('RN'); }
+    if (parsed.name && !nameEl.value.trim()) { nameEl.value = parsed.name; filled.push('Name'); }
+    if (parsed.admission && !admEl.value)    { admEl.value = parsed.admission; filled.push('Admission Date'); }
+
+    setStatus(filled.length
+      ? `✅ Auto-filled: ${filled.join(', ')} — please verify against the label.`
+      : '⚠️ Could not confidently read the label. Please enter details manually.');
+  } catch(e){
+    console.warn('OCR error:', e);
+    setStatus('❌ Scan failed — ' + (e.message || 'please enter details manually.'));
+  }
+}
+
 function handleAuditNext(){
   const errEl = document.getElementById('au-next-err');
   errEl.style.display='none';
@@ -1958,6 +2071,8 @@ function currentPatientPayload(extra){
     date: document.getElementById('au-date').value,
     ward: document.getElementById('au-ward').value,
     rn: document.getElementById('au-rn').value.trim(),
+    patientName: document.getElementById('au-patient-name').value.trim(),
+    admissionDate: document.getElementById('au-admission-date').value,
     auditor: document.getElementById('au-auditor').value.trim(),
     site: document.getElementById('au-site').value,
     day: document.getElementById('au-day').value,
@@ -2034,7 +2149,7 @@ function resetAuditForm(){
   Object.keys(PHOTO_STATE).forEach(k=>delete PHOTO_STATE[k]);
   CURRENT_DRAFT_ID = null;
   CURRENT_SESSION_RN = null;
-  ['au-rn','au-auditor','au-day','au-remarks'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['au-rn','au-patient-name','au-admission-date','au-auditor','au-day','au-remarks'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('au-do-ins').checked = true;
   document.getElementById('au-do-mnt').checked = true;
   document.getElementById('au-form-body').style.display='none';
@@ -2103,6 +2218,8 @@ async function resumeDraft(draftId){
     document.getElementById('au-date').value = d.date || '';
     document.getElementById('au-ward').value = d.ward || '';
     document.getElementById('au-rn').value = d.rn || '';
+    document.getElementById('au-patient-name').value = d.patientName || '';
+    document.getElementById('au-admission-date').value = d.admissionDate || '';
     document.getElementById('au-auditor').value = d.auditor || '';
     document.getElementById('au-site').value = d.site || '';
     document.getElementById('au-day').value = d.day || '';
