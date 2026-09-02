@@ -1809,38 +1809,104 @@ function parseOcrText(text){
   const lines = String(text||'').split('\n').map(l=>l.trim()).filter(Boolean);
   let rn = '', name = '', admission = '';
 
+  // "R/N", "R.N", "RN", "MRN" — hospital labels often print it with a slash.
   for (const line of lines) {
-    const m = line.match(/(?:RN|MRN|REG(?:ISTRATION)?\s*NO\.?)\s*[:\-]?\s*([A-Z0-9\-]{5,15})/i);
-    if (m) { rn = m[1]; break; }
+    const m = line.match(/R\s*[\/.]?\s*N|MRN|REG(?:ISTRATION)?\s*NO\.?/i);
+    if (m) {
+      const after = line.slice(m.index + m[0].length);
+      const num = after.match(/(\d{4,12})/);
+      if (num) { rn = num[1]; break; }
+    }
   }
   if (!rn) {
     for (const line of lines) {
-      const m = line.match(/\b(\d{6,12})\b/);
+      const m = line.match(/\b(\d{6,10})\b/); // avoid matching 12-digit IC numbers
       if (m) { rn = m[1]; break; }
     }
   }
 
-  for (const line of lines) {
-    const m = line.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/);
-    if (m) {
-      let d = m[1].padStart(2,'0'), mo = m[2].padStart(2,'0'), y = m[3];
-      if (y.length === 2) y = '20'+y;
-      admission = `${y}-${mo}-${d}`;
-      break;
+  // Admission date: labels usually show BOTH date-of-birth and admission
+  // date/time — the admission one is always the more recent of the two,
+  // so scan every date found and keep the latest (largest) one.
+  let bestDate = null;
+  const dateRe = /\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/g;
+  lines.forEach(line=>{
+    let m;
+    while ((m = dateRe.exec(line)) !== null) {
+      const d = parseInt(m[1],10), mo = parseInt(m[2],10);
+      let y = parseInt(m[3],10); if (y < 100) y += 2000;
+      if (mo < 1 || mo > 12 || d < 1 || d > 31) continue;
+      const dt = new Date(y, mo-1, d);
+      if (isNaN(dt.getTime())) continue;
+      if (!bestDate || dt > bestDate.dt) bestDate = { dt, d, mo, y };
     }
+  });
+  if (bestDate) {
+    admission = `${bestDate.y}-${String(bestDate.mo).padStart(2,'0')}-${String(bestDate.d).padStart(2,'0')}`;
   }
 
+  // Name — labels often have multiple columns on one OCR line (name,
+  // then a race/nationality code far to the right) separated by a wide
+  // gap, so split on that gap and score each column segment on its own.
   let bestName = '';
   for (const line of lines) {
-    const clean = line.replace(/[^A-Za-z\s.@]/g, '').trim();
-    if (clean.length > bestName.length && clean.length >= 5 &&
-        /^[A-Z\s.@]+$/.test(clean) && !/RN|MRN|WARD|DATE|ADMIS|HOSPITAL|HTPN/i.test(clean)) {
-      bestName = clean;
+    const segments = line.split(/\s{2,}/);
+    for (const seg of segments) {
+      const clean = seg.replace(/[^A-Za-z\s.@/]/g, '').trim();
+      if (clean.length > bestName.length && clean.length >= 5 &&
+          /^[A-Z\s.@/]+$/.test(clean) &&
+          !/RN|MRN|WARD|DATE|ADMIS|HOSPITAL|HTPN|MALAYSIA|SELANGOR|INDIA|CHINESE|MALAY|GEN AWAM/i.test(clean)) {
+        bestName = clean;
+      }
     }
   }
   name = bestName;
 
   return { rn, name, admission };
+}
+
+// Tries OCR at several rotations (labels/wristbands are very often
+// photographed sideways) and keeps whichever angle gives the most
+// confident result, stopping early once a good-enough match is found.
+async function ocrWithRotationRetry(file, setStatus){
+  const angles = [90, 270, 0, 180];
+  let best = { text:'', confidence:-1 };
+  for (const angle of angles) {
+    setStatus(`🔍 Scanning label… (checking orientation)`);
+    try {
+      const input = await rotateImageFile(file, angle);
+      const result = await Tesseract.recognize(input, 'eng');
+      const conf = (result && result.data && result.data.confidence) || 0;
+      if (conf > best.confidence) best = { text: result.data.text, confidence: conf };
+      if (best.confidence >= 65) break; // good enough — stop trying more angles
+    } catch(e){ /* try next angle */ }
+  }
+  return best.text;
+}
+
+function rotateImageFile(file, angle){
+  if (angle === 0) return Promise.resolve(file);
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const canvas = document.createElement('canvas');
+        const sideways = (angle === 90 || angle === 270);
+        canvas.width  = sideways ? img.height : img.width;
+        canvas.height = sideways ? img.width  : img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.translate(canvas.width/2, canvas.height/2);
+        ctx.rotate(angle * Math.PI / 180);
+        ctx.drawImage(img, -img.width/2, -img.height/2);
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Rotation failed')), 'image/jpeg', 0.92);
+      };
+      img.onerror = ()=>reject(new Error('Could not read image'));
+      img.src = e.target.result;
+    };
+    reader.onerror = ()=>reject(new Error('Could not read file'));
+    reader.readAsDataURL(file);
+  });
 }
 
 async function handleLabelScan(fileList){
@@ -1851,8 +1917,7 @@ async function handleLabelScan(fileList){
   setStatus('🔍 Loading OCR…');
   try {
     await loadTesseractScript();
-    setStatus('🔍 Scanning label…');
-    const { data: { text } } = await Tesseract.recognize(file, 'eng');
+    const text = await ocrWithRotationRetry(file, setStatus);
     const parsed = parseOcrText(text);
 
     const rnEl   = document.getElementById('au-rn');
