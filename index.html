@@ -300,6 +300,27 @@ function enterDashboard() {
   #tab-audit .aud-thumb{position:relative;width:56px;height:56px;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;flex-shrink:0;}
   #tab-audit .aud-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
   #tab-audit .aud-thumb button{position:absolute;top:1px;right:1px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.65);color:white;border:none;font-size:11px;line-height:1;cursor:pointer;padding:0;}
+
+  /* Program Progress goal cards */
+  .pg-card{background:white;border-radius:1.5rem;box-shadow:0 8px 20px rgba(0,0,0,.06);padding:18px;margin-bottom:14px;}
+  .pg-card-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .pg-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .pg-title{font-size:13px;font-weight:900;color:#0f172a;line-height:1.3;margin:0;}
+  .pg-meta{font-size:11px;color:#64748b;margin:0 0 3px;}
+  .pg-meta strong{color:#334155;}
+  .pg-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 10px;}
+  .pg-stat{border-radius:14px;padding:12px 14px;min-width:0;}
+  .pg-current{background:#0f172a;}
+  .pg-stat-label{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.07em;margin:0 0 5px;}
+  .pg-stat-value{font-size:19px;font-weight:900;line-height:1;margin:0;overflow-wrap:break-word;}
+  .pg-stat-sub{font-size:9px;font-weight:700;margin:4px 0 0;line-height:1.3;}
+  .pg-bar-track{background:#e2e8f0;border-radius:99px;height:7px;overflow:hidden;margin-bottom:8px;}
+  .pg-bar-fill{height:100%;width:0%;border-radius:99px;transition:width .6s;}
+  .pg-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:900;background:#f1f5f9;color:#94a3b8;}
+  .pg-section-label{display:inline-block;background:#facc15;color:#0f172a;font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:.1em;padding:8px 16px;border-radius:10px;margin:20px 0 10px;}
+  .pg-multi-row{display:flex;flex-direction:column;gap:6px;margin-top:2px;}
+  .pg-multi-item{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:900;color:white;}
+  .pg-multi-tag{font-size:9px;font-weight:900;color:#94a3b8;background:#1e293b;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.05em;}
   #tab-audit .aud-sec{background:#0f172a;color:#facc15;font-weight:900;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;border-radius:8px;margin:16px 0 4px;}
   #tab-audit .yn{display:flex;gap:4px;flex-shrink:0;}
   #tab-audit .yn button{width:34px;height:30px;border:2px solid #e2e8f0;background:white;border-radius:8px;font-weight:900;font-size:11px;cursor:pointer;color:#94a3b8;}
@@ -364,6 +385,10 @@ function enterDashboard() {
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
         Program Progress
       </button>
+      <button class="snav" id="snav-training" onclick="showPanel('training')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        Training
+      </button>
       <button class="snav" id="snav-feedback" onclick="showPanel('feedback')">
         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         Feedback
@@ -375,7 +400,7 @@ function enterDashboard() {
     </div>
 
     <div style="margin-top:auto;padding-top:16px;border-top:1px solid #1e293b;text-align:center;margin-top:24px;">
-      <button onclick="logout()" style="background:transparent;border:1px solid #334155;color:#94a3b8;font-family:Inter,sans-serif;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:8px 16px;border-radius:10px;cursor:pointer;margin-bottom:12px;width:100%;">🔒 Log Out</button>
+      <button onclick="if(confirm('Log out?')) logout();" style="background:transparent;border:1px solid #334155;color:#94a3b8;font-family:Inter,sans-serif;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:8px 16px;border-radius:10px;cursor:pointer;margin-bottom:12px;width:100%;">🔒 Log Out</button>
       <div style="font-size:9px;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.15em;">HTPN Infection Control</div>
     </div>
   </aside>
@@ -704,11 +729,11 @@ function enterDashboard() {
       <div style="max-width:960px;margin:0 auto;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
           <div>
-            <p style="font-size:11px;font-weight:900;color:#dc2626;text-transform:uppercase;letter-spacing:.15em;margin-bottom:4px;">🎯 Program Progress</p>
-            <h1 style="font-size:24px;font-weight:900;color:#0f172a;letter-spacing:-.5px;">Tracking Our Goals</h1>
-            <p style="color:#64748b;font-size:13px;font-weight:600;">Building a safer tomorrow.</p>
+            <p style="font-size:clamp(17px,5.8vw,30px);font-weight:900;color:#dc2626;letter-spacing:-.5px;text-transform:uppercase;margin:0 0 4px;line-height:1.05;white-space:nowrap;">🎯 Program Progress</p>
+            <h1 style="font-size:15px;font-weight:800;color:#334155;letter-spacing:0;margin:0 0 4px;">Tracking Our Goals</h1>
+            <p style="color:#94a3b8;font-size:12px;font-weight:600;margin:0;">Building a safer tomorrow.</p>
           </div>
-          <div style="background:white;padding:12px 18px;border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,.06);font-size:12px;font-weight:800;color:#334155;white-space:nowrap;">
+          <div style="background:white;padding:10px 16px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.06);font-size:12px;font-weight:800;color:#334155;white-space:nowrap;">
             📅 As of <span id="pg-asof">—</span>
           </div>
         </div>
@@ -716,6 +741,26 @@ function enterDashboard() {
         <div id="pg-cards"></div>
 
         <p style="font-size:11px;color:#94a3b8;text-align:center;margin-top:12px;">Goals 4 &amp; 5 are updated manually — edit the <strong>"PROGRAM GOALS"</strong> tab directly in the Google Sheet.</p>
+      </div>
+    </div>
+
+    <!-- ══ PANEL: TRAINING ══════════════════════════════ -->
+    <div id="panel-training" style="display:none;">
+      <div style="max-width:480px;margin:20px auto;">
+        <div style="background:radial-gradient(ellipse at 50% 15%,#3b0a0a 0%,#1a0505 45%,#020617 100%);border-radius:2.5rem;padding:44px 30px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.35);">
+          <div style="width:90px;height:90px;margin:0 auto 22px;background:linear-gradient(135deg,#dc2626,#7f1d1d);border-radius:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(220,38,38,.5);">
+            <svg width="42" height="42" fill="none" stroke="#facc15" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v6M9 11h6"/></svg>
+          </div>
+          <h2 style="font-family:Inter,sans-serif;font-size:28px;font-weight:900;color:white;letter-spacing:-1px;line-height:1;margin-bottom:4px;">CLABSI</h2>
+          <h2 style="font-family:Inter,sans-serif;font-size:22px;font-weight:900;color:#ef4444;letter-spacing:1px;line-height:1;margin-bottom:14px;">GUARD PRO</h2>
+          <p style="font-size:10px;font-weight:900;color:#facc15;text-transform:uppercase;letter-spacing:.25em;margin-bottom:18px;">CLABSI Prevention Training</p>
+          <p style="font-size:12px;color:#94a3b8;line-height:1.7;margin-bottom:26px;">Central Line-Associated Bloodstream Infection Prevention — interactive training module for IPC staff.</p>
+          <a href="https://clabsi-guard-pro.vercel.app/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#dc2626,#991b1b);color:white;font-weight:900;font-size:13px;letter-spacing:.08em;text-transform:uppercase;padding:16px 38px;border-radius:99px;text-decoration:none;box-shadow:0 12px 28px rgba(220,38,38,.4);">
+            <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Start Training
+          </a>
+          <p style="font-size:9px;color:#475569;margin-top:20px;text-transform:uppercase;letter-spacing:.12em;">Opens in a new tab · IPC Unit HTPN</p>
+        </div>
       </div>
     </div>
 
@@ -815,6 +860,10 @@ function enterDashboard() {
     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
     Progress
   </button>
+  <button onclick="showPanel('training')" id="mbn-training" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;background:transparent;border:none;color:#94a3b8;font-family:Inter,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;border-radius:10px;transition:all .2s;">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+    Training
+  </button>
   <button onclick="showPanel('feedback')" id="mbn-feedback" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;background:transparent;border:none;color:#94a3b8;font-family:Inter,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;border-radius:10px;transition:all .2s;">
     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
     Feedback
@@ -822,6 +871,10 @@ function enterDashboard() {
   <button onclick="showPanel('info')" id="mbn-info" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;background:transparent;border:none;color:#94a3b8;font-family:Inter,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;border-radius:10px;transition:all .2s;">
     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
     Info
+  </button>
+  <button onclick="if(confirm('Log out?')) logout();" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;background:transparent;border:none;color:#94a3b8;font-family:Inter,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;border-radius:10px;transition:all .2s;">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    Log Out
   </button>
 </div>
 
@@ -865,15 +918,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ── SIDEBAR PANELS ───────────────────────────────────────
 function showPanel(name) {
-  ['dashboard','progress','feedback','info'].forEach(p => {
+  ['dashboard','progress','training','feedback','info'].forEach(p => {
     document.getElementById('panel-'+p).style.display = p===name ? 'block' : 'none';
   });
-  ['dashboard','progress','feedback','info'].forEach(p => {
+  ['dashboard','progress','training','feedback','info'].forEach(p => {
     const sn = document.getElementById('snav-'+p);
     if (sn) sn.classList.toggle('active', p===name);
   });
   // Sync mobile bottom nav
-  ['dashboard','progress','feedback','info'].forEach(p => {
+  ['dashboard','progress','training','feedback','info'].forEach(p => {
     const btn = document.getElementById('mbn-'+p);
     if (btn) {
       btn.style.color    = p===name ? '#facc15' : '#94a3b8';
@@ -883,6 +936,11 @@ function showPanel(name) {
   // Tab nav visibility
   const tabNav = document.getElementById('tab-nav');
   if (tabNav) tabNav.style.display = name==='dashboard' ? 'flex' : 'none';
+  // The top header (title + last-updated + red GA-exceed alert) is
+  // Dashboard-specific content — hide it on every other panel so it
+  // doesn't show up on Progress/Training/Feedback/Info too.
+  const header = document.querySelector('#main-content > header');
+  if (header) header.style.display = name==='dashboard' ? 'flex' : 'none';
   if (name==='dashboard') {
     if (trendChart) setTimeout(()=>trendChart.resize(),100);
     if (compChart)  setTimeout(()=>compChart.resize(),100);
@@ -1362,58 +1420,72 @@ function renderAuditLogTable(records) {
 
 // ── PROGRAM PROGRESS — 5 goal cards, target vs current ────
 const PROGRAM_GOALS = [
-  { id:'clabsi-rate', icon:'📉', color:'#dc2626', bg:'#fee2e2',
+  { id:'clabsi-rate', color:'#dc2626', bg:'#fee2e2',
+    iconSvg:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
     title:'1. Reduce CLABSI rates in medical wards by 10% by July 2026',
     measure:'CLABSI incidence rate, per 1000 catheter days',
     tools:'Line listing CLABSI (Google Drive)',
     targetLabel:'↓ 10%', targetSub:'from baseline (Sept 2026)' },
-  { id:'line-listing', icon:'📋', color:'#2563eb', bg:'#dbeafe',
+  { id:'line-listing', color:'#2563eb', bg:'#dbeafe',
+    iconSvg:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>',
     title:'2. Improve CLABSI line listing completeness in medical department',
     measure:'% of compliance completeness line listing CVC',
     tools:'Audit line listing CVC Checklist',
     targetLabel:'100%', targetSub:'compliance' },
-  { id:'cvc-bundle', icon:'💉', color:'#16a34a', bg:'#dcfce7',
+  { id:'cvc-bundle', color:'#16a34a', bg:'#dcfce7',
+    iconSvg:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>',
     title:'3. Improve compliance to CVC insertion & maintenance bundle',
     measure:'% of insertion & maintenance bundle compliance & completeness',
     tools:'Audit Insertion & Maintenance Checklist',
     targetLabel:'80%', targetSub:'compliance' },
-  { id:'training', icon:'👥', color:'#d97706', bg:'#fef3c7',
+  { id:'training', color:'#d97706', bg:'#fef3c7',
+    iconSvg:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
     title:'4. Improve training coverage for CLABSI prevention & CVC care bundle',
     measure:'% staff attendance to CLABSI prevention training (MO, HO, SN)',
     tools:'Attendance database',
     targetLabel:'80%', targetSub:'attendance each category' },
-  { id:'scrub-hub', icon:'🧼', color:'#7c3aed', bg:'#ede9fe',
+  { id:'scrub-hub', color:'#7c3aed', bg:'#ede9fe',
+    // CVC hub + alcohol swab disinfection — NOT hand-washing soap.
+    iconSvg:'<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M3 12h3M18 12h3M5.64 5.64l2.12 2.12M16.24 16.24l2.12 2.12M5.64 18.36l2.12-2.12M16.24 7.76l2.12-2.12"/></svg>',
     title:'5. Improve compliance to Scrub the Hub',
-    measure:'% compliance Scrub the Hub',
+    measure:'% compliance Scrub the Hub (CVC hub disinfection with alcohol swab)',
     tools:'Audit compliance Scrub the Hub Checklist',
     targetLabel:'90%', targetSub:'compliance' },
 ];
 
 function progressCardHTML(g){
+  const isTraining = g.id === 'training';
+  const currentBlock = isTraining ? `
+      <div class="pg-stat pg-current">
+        <p class="pg-stat-label" style="color:#94a3b8;">Current</p>
+        <div class="pg-multi-row">
+          <div class="pg-multi-item"><span class="pg-multi-tag">MO</span><span id="pg-cur-training-mo">—</span></div>
+          <div class="pg-multi-item"><span class="pg-multi-tag">HO</span><span id="pg-cur-training-ho">—</span></div>
+          <div class="pg-multi-item"><span class="pg-multi-tag">SN</span><span id="pg-cur-training-sn">—</span></div>
+        </div>
+      </div>` : `
+      <div class="pg-stat pg-current">
+        <p class="pg-stat-label" style="color:#94a3b8;">Current</p>
+        <p class="pg-stat-value" style="color:white;"><span id="pg-cur-${g.id}">—</span></p>
+        <p class="pg-stat-sub" id="pg-sub-${g.id}" style="color:#94a3b8;"></p>
+      </div>`;
   return `
-  <div style="background:white;border-radius:1.75rem;box-shadow:0 8px 20px rgba(0,0,0,.06);padding:22px;display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
-    <div style="width:56px;height:56px;border-radius:16px;background:${g.bg};display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">${g.icon}</div>
-    <div style="flex:2;min-width:220px;">
-      <h3 style="font-size:14px;font-weight:900;color:#0f172a;margin-bottom:8px;line-height:1.35;">${g.title}</h3>
-      <p style="font-size:11px;color:#64748b;margin-bottom:3px;"><strong style="color:#334155;">Measure:</strong> ${g.measure}</p>
-      <p style="font-size:11px;color:#64748b;"><strong style="color:#334155;">Tools:</strong> ${g.tools}</p>
+  <div class="pg-card">
+    <div class="pg-card-head">
+      <div class="pg-icon" style="background:${g.bg};color:${g.color};">${g.iconSvg}</div>
+      <h3 class="pg-title">${g.title}</h3>
     </div>
-    <div style="background:${g.bg};border-radius:16px;padding:14px 16px;min-width:120px;">
-      <p style="font-size:9px;font-weight:900;color:${g.color};text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Target</p>
-      <p style="font-size:22px;font-weight:900;color:${g.color};line-height:1;">${g.targetLabel}</p>
-      <p style="font-size:9px;color:#64748b;margin-top:4px;">${g.targetSub}</p>
+    <p class="pg-meta"><strong>Measure:</strong> ${g.measure}</p>
+    <p class="pg-meta"><strong>Tools:</strong> ${g.tools}</p>
+    <div class="pg-stats">
+      <div class="pg-stat" style="background:${g.bg};">
+        <p class="pg-stat-label" style="color:${g.color};">Target</p>
+        <p class="pg-stat-value" style="color:${g.color};">${g.targetLabel}</p>
+        <p class="pg-stat-sub" style="color:${g.color};opacity:.8;">${g.targetSub}</p>
+      </div>${currentBlock}
     </div>
-    <div style="background:#f8fafc;border-radius:16px;padding:14px 16px;min-width:170px;flex:1;">
-      <p style="font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Current</p>
-      <p style="font-size:22px;font-weight:900;color:#0f172a;line-height:1;">
-        <span id="pg-cur-${g.id}">—</span>
-      </p>
-      <p id="pg-sub-${g.id}" style="font-size:9px;font-weight:700;color:#94a3b8;margin-top:2px;"></p>
-      <div style="background:#e2e8f0;border-radius:99px;height:8px;margin:10px 0 8px;overflow:hidden;">
-        <div id="pg-bar-${g.id}" style="background:${g.color};height:100%;width:0%;border-radius:99px;transition:width .6s;"></div>
-      </div>
-      <span id="pg-badge-${g.id}" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:900;background:#f1f5f9;color:#94a3b8;">Loading…</span>
-    </div>
+    <div class="pg-bar-track"><div id="pg-bar-${g.id}" class="pg-bar-fill" style="background:${g.color};"></div></div>
+    <span id="pg-badge-${g.id}" class="pg-badge">Loading…</span>
   </div>`;
 }
 
@@ -1425,6 +1497,26 @@ function updateProgressCard(id, currentText, subText, achieved, barPct){
   if(cur) cur.textContent = currentText;
   if(sub) sub.textContent = subText;
   if(bar) bar.style.width = Math.max(0,Math.min(100,barPct||0)) + '%';
+  if(badge){
+    badge.textContent = achieved ? '✓ Achieved' : '✕ Not achieved';
+    badge.style.background = achieved ? '#dcfce7' : '#fee2e2';
+    badge.style.color = achieved ? '#16a34a' : '#dc2626';
+  }
+}
+
+// Training goal has 3 separate values (MO/HO/SN) instead of one —
+// target is "80% attendance EACH category", so it's only achieved
+// once all three individually clear 80%, not just the average.
+function updateTrainingCard(mo, ho, sn){
+  const setVal = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v.toFixed(1)+'%'; };
+  setVal('pg-cur-training-mo', mo);
+  setVal('pg-cur-training-ho', ho);
+  setVal('pg-cur-training-sn', sn);
+  const avg = (mo+ho+sn)/3;
+  const achieved = mo>=80 && ho>=80 && sn>=80;
+  const bar = document.getElementById('pg-bar-training');
+  if(bar) bar.style.width = Math.max(0,Math.min(100,avg)) + '%';
+  const badge = document.getElementById('pg-badge-training');
   if(badge){
     badge.textContent = achieved ? '✓ Achieved' : '✕ Not achieved';
     badge.style.background = achieved ? '#dcfce7' : '#fee2e2';
@@ -1446,20 +1538,25 @@ function countMonthsWithData(byWard){
 async function loadProgramGoals(){
   const box = document.getElementById('pg-cards');
   if(box && !box.dataset.rendered){
-    box.innerHTML = PROGRAM_GOALS.map(progressCardHTML).join('');
+    let html = '';
+    PROGRAM_GOALS.forEach(g=>{
+      if(g.id==='clabsi-rate')  html += '<div class="pg-section-label">Outcome Measure</div>';
+      if(g.id==='line-listing') html += '<div class="pg-section-label">Progress Measure</div>';
+      html += progressCardHTML(g);
+    });
+    box.innerHTML = html;
     box.dataset.rendered = '1';
   }
 
-  // Manual values (baseline rate, training %, scrub hub %) — from the
-  // "PROGRAM GOALS" tab, edited directly in the Google Sheet.
-  let manual = { baselineRate:0, trainingPct:0, scrubHubPct:0 };
+  // Manual values (As Of, baseline rate, training % per category, scrub
+  // hub %) — from the "PROGRAM GOALS" tab, edited directly in the Sheet.
+  let manual = { asOf:'', baselineRate:0, trainingMO:0, trainingHO:0, trainingSN:0, scrubHubPct:0 };
   try{
     const pg = await callGAS({ action:'getProgramGoals' });
     if(pg && pg.success) manual = pg.data;
   }catch(e){ console.warn('program goals (manual):', e); }
 
-  updateProgressCard('training', manual.trainingPct.toFixed(1)+'%', '(completed training)',
-    manual.trainingPct>=80, Math.min(100,(manual.trainingPct/80)*100));
+  updateTrainingCard(manual.trainingMO||0, manual.trainingHO||0, manual.trainingSN||0);
   updateProgressCard('scrub-hub', manual.scrubHubPct.toFixed(1)+'%', '(completed training)',
     manual.scrubHubPct>=90, Math.min(100,(manual.scrubHubPct/90)*100));
 
@@ -1476,7 +1573,9 @@ async function loadProgramGoals(){
     const withData = monthly.filter(m => m.days>0 || m.kadar>0);
     const latest = withData.length ? withData[withData.length-1] : null;
     const asof = document.getElementById('pg-asof');
-    if(asof) asof.textContent = latest ? latest.bulan : '—';
+    // Manual "As Of" in the sheet wins if the coordinator filled it in;
+    // otherwise fall back to auto-detecting the latest month with data.
+    if(asof) asof.textContent = (manual.asOf && manual.asOf.trim()) ? manual.asOf.trim() : (latest ? latest.bulan : '—');
 
     const baseline = manual.baselineRate || 0;
     const current = latest ? latest.kadar : 0;
