@@ -321,6 +321,13 @@ function enterDashboard() {
   .pg-multi-row{display:flex;flex-direction:column;gap:6px;margin-top:2px;}
   .pg-multi-item{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:900;color:white;}
   .pg-multi-tag{font-size:9px;font-weight:900;color:#94a3b8;background:#1e293b;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.05em;}
+  .pg-vbars{position:relative;display:flex;align-items:flex-end;justify-content:space-around;gap:14px;height:120px;margin-top:10px;padding-top:18px;}
+  .pg-vbar-target-line{position:absolute;left:0;right:0;bottom:calc(20% + 2px);border-top:2px dashed rgba(250,204,21,.6);}
+  .pg-vbar-col{display:flex;flex-direction:column;align-items:center;flex:1;height:100%;justify-content:flex-end;}
+  .pg-vbar-value{font-size:11px;font-weight:900;color:white;margin-bottom:6px;}
+  .pg-vbar-track{width:26px;height:100%;background:rgba(255,255,255,.08);border-radius:8px;display:flex;align-items:flex-end;overflow:hidden;}
+  .pg-vbar-fill{width:100%;border-radius:8px 8px 0 0;transition:height .6s;}
+  .pg-vbar-tag{font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-top:6px;}
   #tab-audit .aud-sec{background:#0f172a;color:#facc15;font-weight:900;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;border-radius:8px;margin:16px 0 4px;}
   #tab-audit .yn{display:flex;gap:4px;flex-shrink:0;}
   #tab-audit .yn button{width:34px;height:30px;border:2px solid #e2e8f0;background:white;border-radius:8px;font-weight:900;font-size:11px;cursor:pointer;color:#94a3b8;}
@@ -1484,10 +1491,23 @@ function progressCardHTML(g){
   const currentBlock = isTraining ? `
       <div class="pg-stat pg-current">
         <p class="pg-stat-label" style="color:#94a3b8;">Current</p>
-        <div class="pg-multi-row">
-          <div class="pg-multi-item"><span class="pg-multi-tag">MO</span><span id="pg-cur-training-mo">—</span></div>
-          <div class="pg-multi-item"><span class="pg-multi-tag">HO</span><span id="pg-cur-training-ho">—</span></div>
-          <div class="pg-multi-item"><span class="pg-multi-tag">SN</span><span id="pg-cur-training-sn">—</span></div>
+        <div class="pg-vbars">
+          <div class="pg-vbar-target-line"></div>
+          <div class="pg-vbar-col">
+            <span class="pg-vbar-value" id="pg-cur-training-mo">—</span>
+            <div class="pg-vbar-track"><div class="pg-vbar-fill" id="pg-bar-training-mo" style="height:0%;background:#b45309;"></div></div>
+            <span class="pg-vbar-tag">MO</span>
+          </div>
+          <div class="pg-vbar-col">
+            <span class="pg-vbar-value" id="pg-cur-training-ho">—</span>
+            <div class="pg-vbar-track"><div class="pg-vbar-fill" id="pg-bar-training-ho" style="height:0%;background:#f59e0b;"></div></div>
+            <span class="pg-vbar-tag">HO</span>
+          </div>
+          <div class="pg-vbar-col">
+            <span class="pg-vbar-value" id="pg-cur-training-sn">—</span>
+            <div class="pg-vbar-track"><div class="pg-vbar-fill" id="pg-bar-training-sn" style="height:0%;background:#fde047;"></div></div>
+            <span class="pg-vbar-tag">SN</span>
+          </div>
         </div>
       </div>` : `
       <div class="pg-stat pg-current">
@@ -1538,6 +1558,10 @@ function updateTrainingCard(mo, ho, sn){
   setVal('pg-cur-training-mo', mo);
   setVal('pg-cur-training-ho', ho);
   setVal('pg-cur-training-sn', sn);
+  const setBar = (id, v) => { const el = document.getElementById(id); if(el) el.style.height = Math.max(0,Math.min(100,v)) + '%'; };
+  setBar('pg-bar-training-mo', mo);
+  setBar('pg-bar-training-ho', ho);
+  setBar('pg-bar-training-sn', sn);
   const avg = (mo+ho+sn)/3;
   const achieved = mo>=80 && ho>=80 && sn>=80;
   const bar = document.getElementById('pg-bar-training');
