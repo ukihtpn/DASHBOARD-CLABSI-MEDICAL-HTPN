@@ -321,13 +321,16 @@ function enterDashboard() {
   .pg-multi-row{display:flex;flex-direction:column;gap:6px;margin-top:2px;}
   .pg-multi-item{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:900;color:white;}
   .pg-multi-tag{font-size:9px;font-weight:900;color:#94a3b8;background:#1e293b;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.05em;}
-  .pg-vbars{display:flex;align-items:flex-end;justify-content:space-around;gap:16px;margin-top:12px;}
-  .pg-vbar-col{display:flex;flex-direction:column;align-items:center;flex:1;}
-  .pg-vbar-value{font-size:11px;font-weight:900;color:white;margin-bottom:6px;}
-  .pg-vbar-track{position:relative;width:26px;height:90px;background:rgba(255,255,255,.08);border-radius:8px;overflow:hidden;}
-  .pg-vbar-fill{position:absolute;left:0;bottom:0;width:100%;height:0%;border-radius:8px 8px 0 0;transition:height .6s;}
-  .pg-vbar-target-line{position:absolute;left:-6px;right:-6px;bottom:80%;border-top:2px dashed rgba(250,204,21,.85);z-index:2;}
-  .pg-vbar-tag{font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-top:6px;}
+  .pg-training-table-wrap{overflow-x:auto;margin:14px 0 10px;}
+  .pg-training-table{width:100%;border-collapse:collapse;font-size:11px;}
+  .pg-training-table thead th{text-align:left;font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;padding:4px 8px 6px;border-bottom:1px solid #e2e8f0;}
+  .pg-training-table thead th:first-child{width:52px;}
+  .pg-training-table td{padding:6px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+  .pg-tt-cat{font-weight:900;color:#0f172a;white-space:nowrap;font-size:10px;}
+  .pg-tt-cell{display:flex;align-items:center;gap:6px;}
+  .pg-tt-track{flex:1;height:6px;background:#e2e8f0;border-radius:99px;overflow:hidden;min-width:36px;}
+  .pg-tt-fill{height:100%;width:0%;border-radius:99px;transition:width .5s;}
+  .pg-tt-val{font-size:10px;font-weight:800;color:#334155;min-width:34px;text-align:right;}
   #tab-audit .aud-sec{background:#0f172a;color:#facc15;font-weight:900;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;border-radius:8px;margin:16px 0 4px;}
   #tab-audit .yn{display:flex;gap:4px;flex-shrink:0;}
   #tab-audit .yn button{width:34px;height:30px;border:2px solid #e2e8f0;background:white;border-radius:8px;font-weight:900;font-size:11px;cursor:pointer;color:#94a3b8;}
@@ -444,6 +447,10 @@ function enterDashboard() {
         <button onclick="window.print()" style="display:flex;align-items:center;gap:8px;background:#4f46e5;color:white;padding:14px 24px;border:none;border-radius:16px;font-family:Inter,sans-serif;font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:.12em;cursor:pointer;box-shadow:0 16px 32px rgba(79,70,229,.25);">
           <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           Print
+        </button>
+        <button onclick="openPosterModal()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#dc2626,#991b1b);color:white;padding:14px 24px;border:none;border-radius:16px;font-family:Inter,sans-serif;font-weight:900;font-size:11px;text-transform:uppercase;letter-spacing:.12em;cursor:pointer;box-shadow:0 16px 32px rgba(220,38,38,.25);">
+          <svg width="16" height="16" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          Poster
         </button>
       </div>
     </header>
@@ -909,6 +916,56 @@ function enterDashboard() {
     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
     Log Out
   </button>
+</div>
+
+<!-- ══ POSTER MODAL (landscape infographic) ══════════════ -->
+<div id="poster-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;align-items:center;justify-content:center;padding:16px;overflow-y:auto;">
+  <div style="max-width:980px;width:100%;">
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;">
+      <button id="poster-download-btn" onclick="downloadPoster()" style="background:#facc15;color:#0f172a;border:none;font-weight:900;font-size:12px;padding:10px 18px;border-radius:10px;cursor:pointer;">⬇ Download PNG</button>
+      <button onclick="closePosterModal()" style="background:rgba(255,255,255,.15);color:white;border:none;font-weight:900;font-size:12px;padding:10px 16px;border-radius:10px;cursor:pointer;">✕ Close</button>
+    </div>
+
+    <div id="poster-canvas" style="background:radial-gradient(ellipse at 12% 12%,#3b0a0a 0%,#1a0505 40%,#020617 100%);border-radius:1.5rem;padding:30px 36px;box-shadow:0 24px 60px rgba(0,0,0,.4);display:grid;grid-template-columns:1fr 1.4fr;gap:26px;">
+
+      <!-- LEFT: hero gauge -->
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid rgba(255,255,255,.08);padding-right:26px;">
+        <div style="width:50px;height:50px;background:linear-gradient(135deg,#dc2626,#7f1d1d);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
+          <svg width="24" height="24" fill="none" stroke="#facc15" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v6M9 11h6"/></svg>
+        </div>
+        <p style="font-size:9px;font-weight:900;color:#facc15;text-transform:uppercase;letter-spacing:.15em;margin:0 0 2px;">HTPN Medical Ward</p>
+        <h1 style="font-size:16px;font-weight:900;color:white;margin:0 0 16px;text-align:center;">CLABSI Prevention Snapshot</h1>
+        <div id="poster-gauge-rate-wrap"></div>
+        <p style="font-size:9px;color:#94a3b8;margin-top:10px;text-align:center;" id="poster-rate-detail">—</p>
+      </div>
+
+      <!-- RIGHT: metrics + recommendations -->
+      <div style="display:flex;flex-direction:column;min-width:0;">
+        <p style="font-size:9px;color:#64748b;text-align:right;margin:0 0 12px;" id="poster-date">—</p>
+
+        <p style="font-size:9px;font-weight:900;color:#facc15;text-transform:uppercase;letter-spacing:.12em;margin:0 0 10px;">Compliance Snapshot</p>
+        <div style="display:flex;align-items:center;gap:22px;margin-bottom:20px;">
+          <div style="display:flex;flex-direction:column;align-items:center;">
+            <div id="poster-gauge-cvc-wrap"></div>
+            <span style="font-size:9px;font-weight:800;color:#cbd5e1;margin-top:6px;white-space:nowrap;">CVC Bundle</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;">
+            <div id="poster-gauge-ll-wrap"></div>
+            <span style="font-size:9px;font-weight:800;color:#cbd5e1;margin-top:6px;white-space:nowrap;">Line Listing</span>
+          </div>
+          <div style="display:flex;flex-direction:column;justify-content:center;gap:10px;flex:1;">
+            <div><span style="font-size:20px;font-weight:900;color:white;" id="poster-cases">—</span> <span style="font-size:9px;color:#94a3b8;">cases YTD</span></div>
+            <div><span style="font-size:20px;font-weight:900;color:white;" id="poster-days">—</span> <span style="font-size:9px;color:#94a3b8;">catheter days YTD</span></div>
+          </div>
+        </div>
+
+        <p style="font-size:9px;font-weight:900;color:#facc15;text-transform:uppercase;letter-spacing:.12em;margin:0 0 8px;">Recommendations</p>
+        <div id="poster-recommendations" style="display:flex;flex-direction:column;gap:6px;"></div>
+
+        <p style="font-size:7px;color:#64748b;margin-top:14px;line-height:1.5;">Reflects general evidence-based practice (SHEA/IDSA Compendium 2022, CDC, WHO, NHS) — not a substitute for clinical judgement or local IPC policy. · CLABSI Tracker PRO, IPC Unit HTPN</p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1486,34 +1543,54 @@ const PROGRAM_GOALS = [
     targetLabel:'90%', targetSub:'compliance' },
 ];
 
+const TRAINING_CATEGORIES = ['MO','HO','SN W1','SN W2','SN W3','SN W6'];
+const TRAINING_METRICS = [
+  { key:'registered', label:'Registered', color:'#3b82f6' },
+  { key:'theory',     label:'Theory',     color:'#22c55e' },
+  { key:'competency', label:'Competency', color:'#f59e0b' },
+];
+
+function trainingTableHTML(){
+  const rows = TRAINING_CATEGORIES.map(cat=>{
+    const safeCat = cat.replace(/\s+/g,'-');
+    const cells = TRAINING_METRICS.map(m=>`
+      <td>
+        <div class="pg-tt-cell">
+          <div class="pg-tt-track"><div class="pg-tt-fill" id="pg-tt-${safeCat}-${m.key}" style="width:0%;background:${m.color};"></div></div>
+          <span class="pg-tt-val" id="pg-tt-val-${safeCat}-${m.key}">—</span>
+        </div>
+      </td>`).join('');
+    return `<tr><td class="pg-tt-cat">${cat}</td>${cells}</tr>`;
+  }).join('');
+  return `
+    <div class="pg-training-table-wrap">
+      <table class="pg-training-table">
+        <thead><tr><th></th><th>Registered</th><th>Theory</th><th>Competency</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
 function progressCardHTML(g){
   const isTraining = g.id === 'training';
-  const currentBlock = isTraining ? `
-      <div class="pg-stat pg-current">
-        <p class="pg-stat-label" style="color:#94a3b8;">Current</p>
-        <div class="pg-vbars">
-          <div class="pg-vbar-col">
-            <span class="pg-vbar-value" id="pg-cur-training-mo">—</span>
-            <div class="pg-vbar-track"><div class="pg-vbar-target-line"></div><div class="pg-vbar-fill" id="pg-bar-training-mo" style="background:#b45309;"></div></div>
-            <span class="pg-vbar-tag">MO</span>
-          </div>
-          <div class="pg-vbar-col">
-            <span class="pg-vbar-value" id="pg-cur-training-ho">—</span>
-            <div class="pg-vbar-track"><div class="pg-vbar-target-line"></div><div class="pg-vbar-fill" id="pg-bar-training-ho" style="background:#f59e0b;"></div></div>
-            <span class="pg-vbar-tag">HO</span>
-          </div>
-          <div class="pg-vbar-col">
-            <span class="pg-vbar-value" id="pg-cur-training-sn">—</span>
-            <div class="pg-vbar-track"><div class="pg-vbar-target-line"></div><div class="pg-vbar-fill" id="pg-bar-training-sn" style="background:#fde047;"></div></div>
-            <span class="pg-vbar-tag">SN</span>
-          </div>
-        </div>
-      </div>` : `
+  const statsBlock = isTraining ? `
+    <div style="display:flex;align-items:center;justify-content:space-between;background:${g.bg};border-radius:12px;padding:10px 14px;margin-top:14px;flex-wrap:wrap;gap:6px;">
+      <span style="font-size:9px;font-weight:900;color:${g.color};text-transform:uppercase;letter-spacing:.08em;">Target</span>
+      <span style="font-size:15px;font-weight:900;color:${g.color};">${g.targetLabel} <span style="font-size:10px;font-weight:700;opacity:.8;">${g.targetSub}</span></span>
+    </div>
+    ${trainingTableHTML()}` : `
+    <div class="pg-stats">
+      <div class="pg-stat" style="background:${g.bg};">
+        <p class="pg-stat-label" style="color:${g.color};">Target</p>
+        <p class="pg-stat-value" style="color:${g.color};">${g.targetLabel}</p>
+        <p class="pg-stat-sub" style="color:${g.color};opacity:.8;">${g.targetSub}</p>
+      </div>
       <div class="pg-stat pg-current">
         <p class="pg-stat-label" style="color:#94a3b8;">Current</p>
         <p class="pg-stat-value" style="color:white;"><span id="pg-cur-${g.id}">—</span></p>
         <p class="pg-stat-sub" id="pg-sub-${g.id}" style="color:#94a3b8;"></p>
-      </div>`;
+      </div>
+    </div>`;
   return `
   <div class="pg-card">
     <div class="pg-card-head">
@@ -1522,13 +1599,7 @@ function progressCardHTML(g){
     </div>
     <p class="pg-meta"><strong>Measure:</strong> ${g.measure}</p>
     <p class="pg-meta"><strong>Tools:</strong> ${g.tools}</p>
-    <div class="pg-stats">
-      <div class="pg-stat" style="background:${g.bg};">
-        <p class="pg-stat-label" style="color:${g.color};">Target</p>
-        <p class="pg-stat-value" style="color:${g.color};">${g.targetLabel}</p>
-        <p class="pg-stat-sub" style="color:${g.color};opacity:.8;">${g.targetSub}</p>
-      </div>${currentBlock}
-    </div>
+    ${statsBlock}
     <div class="pg-bar-track"><div id="pg-bar-${g.id}" class="pg-bar-fill" style="background:${g.color};"></div></div>
     <span id="pg-badge-${g.id}" class="pg-badge">Loading…</span>
   </div>`;
@@ -1552,24 +1623,30 @@ function updateProgressCard(id, currentText, subText, achieved, barPct){
 // Training goal has 3 separate values (MO/HO/SN) instead of one —
 // target is "80% attendance EACH category", so it's only achieved
 // once all three individually clear 80%, not just the average.
-function updateTrainingCard(mo, ho, sn){
-  const setVal = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v.toFixed(1)+'%'; };
-  setVal('pg-cur-training-mo', mo);
-  setVal('pg-cur-training-ho', ho);
-  setVal('pg-cur-training-sn', sn);
-  const setBar = (id, v) => { const el = document.getElementById(id); if(el) el.style.height = Math.max(0,Math.min(100,v)) + '%'; };
-  setBar('pg-bar-training-mo', mo);
-  setBar('pg-bar-training-ho', ho);
-  setBar('pg-bar-training-sn', sn);
-  const avg = (mo+ho+sn)/3;
-  const achieved = mo>=80 && ho>=80 && sn>=80;
+function updateTrainingCard(trainingData){
+  trainingData = trainingData || {};
+  let allCompetencyAchieved = true, sumCompetency = 0;
+  TRAINING_CATEGORIES.forEach(cat=>{
+    const safeCat = cat.replace(/\s+/g,'-');
+    const vals = trainingData[cat] || { registered:0, theory:0, competency:0 };
+    TRAINING_METRICS.forEach(m=>{
+      const v = vals[m.key] || 0;
+      const fill = document.getElementById(`pg-tt-${safeCat}-${m.key}`);
+      const val  = document.getElementById(`pg-tt-val-${safeCat}-${m.key}`);
+      if(fill) fill.style.width = Math.max(0,Math.min(100,v)) + '%';
+      if(val)  val.textContent = v.toFixed(1)+'%';
+    });
+    if((vals.competency||0) < 80) allCompetencyAchieved = false;
+    sumCompetency += (vals.competency||0);
+  });
+  const avgCompetency = sumCompetency / TRAINING_CATEGORIES.length;
   const bar = document.getElementById('pg-bar-training');
-  if(bar) bar.style.width = Math.max(0,Math.min(100,avg)) + '%';
+  if(bar) bar.style.width = Math.max(0,Math.min(100,avgCompetency)) + '%';
   const badge = document.getElementById('pg-badge-training');
   if(badge){
-    badge.textContent = achieved ? '✓ Achieved' : '✕ Not achieved';
-    badge.style.background = achieved ? '#dcfce7' : '#fee2e2';
-    badge.style.color = achieved ? '#16a34a' : '#dc2626';
+    badge.textContent = allCompetencyAchieved ? '✓ Achieved' : '✕ Not achieved';
+    badge.style.background = allCompetencyAchieved ? '#dcfce7' : '#fee2e2';
+    badge.style.color = allCompetencyAchieved ? '#16a34a' : '#dc2626';
   }
 }
 
@@ -1599,13 +1676,13 @@ async function loadProgramGoals(){
 
   // Manual values (As Of, baseline rate, training % per category, scrub
   // hub %) — from the "PROGRAM GOALS" tab, edited directly in the Sheet.
-  let manual = { asOf:'', baselineRate:0, trainingMO:0, trainingHO:0, trainingSN:0, scrubHubPct:0 };
+  let manual = { asOf:'', baselineRate:0, scrubHubPct:0, training:{} };
   try{
     const pg = await callGASGet('getProgramGoals');
     if(pg && pg.success) manual = pg.data;
   }catch(e){ console.warn('program goals (manual):', e); }
 
-  updateTrainingCard(manual.trainingMO||0, manual.trainingHO||0, manual.trainingSN||0);
+  updateTrainingCard(manual.training || {});
   updateProgressCard('scrub-hub', manual.scrubHubPct.toFixed(1)+'%', '(completed training)',
     manual.scrubHubPct>=90, Math.min(100,(manual.scrubHubPct/90)*100));
 
@@ -1663,6 +1740,202 @@ async function loadProgramGoals(){
         avg>=80, Math.min(100,(avg/80)*100));
     }
   }catch(e){ console.warn('program goals (cvc bundle):', e); }
+}
+
+// ── INFOGRAPHIC POSTER (landscape, circular gauges) ────────
+// Rule-based analysis + recommendations (NOT a live AI call) — safer
+// for patient-safety-adjacent content: every recommendation is a
+// fixed, pre-written statement grounded in established guidelines
+// (SHEA/IDSA Compendium 2022, CDC, WHO, NHS), simply SELECTED based
+// on which metric is currently underperforming.
+function svgGaugeHTML(id, size, strokeWidth, color){
+  const r = (size - strokeWidth) / 2;
+  const c = 2 * Math.PI * r;
+  return `
+  <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="${strokeWidth}"/>
+    <circle id="${id}-arc" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${strokeWidth}"
+      stroke-dasharray="${c}" stroke-dashoffset="${c}" stroke-linecap="round"
+      transform="rotate(-90 ${size/2} ${size/2})" style="transition:stroke-dashoffset 1.2s ease;"/>
+    <text x="${size/2}" y="${size/2 + size*0.07}" text-anchor="middle" font-size="${Math.round(size*0.22)}" font-weight="900" fill="white" font-family="Inter,sans-serif" id="${id}-value">—</text>
+  </svg>`;
+}
+function setGaugeFill(id, size, strokeWidth, fillPct, displayText){
+  const r = (size - strokeWidth) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - Math.max(0,Math.min(100,fillPct))/100);
+  const arc = document.getElementById(id+'-arc');
+  const val = document.getElementById(id+'-value');
+  if(arc) requestAnimationFrame(()=>{ arc.style.strokeDashoffset = offset; });
+  if(val) val.textContent = displayText;
+}
+function posterRecChip(title, body, source){
+  return `
+  <div style="background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.25);border-radius:9px;padding:8px 12px;">
+    <p style="font-size:10px;font-weight:800;color:#facc15;margin:0 0 3px;">${title}</p>
+    <p style="font-size:9px;color:#e2e8f0;margin:0 0 3px;line-height:1.45;">${body}</p>
+    <p style="font-size:7px;color:#94a3b8;margin:0;font-style:italic;">Source: ${source}</p>
+  </div>`;
+}
+
+function openPosterModal(){
+  document.getElementById('poster-modal-overlay').style.display = 'flex';
+  loadPosterData();
+}
+function closePosterModal(){
+  document.getElementById('poster-modal-overlay').style.display = 'none';
+}
+
+async function loadPosterData(){
+  const dateEl = document.getElementById('poster-date');
+  if(dateEl) dateEl.textContent = 'Generated ' + new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+
+  // Build the three gauges fresh each time (colour depends on status,
+  // computed below) — start empty, fill in once data resolves.
+  document.getElementById('poster-gauge-rate-wrap').innerHTML = svgGaugeHTML('poster-gauge-rate', 170, 15, '#4ade80');
+  document.getElementById('poster-gauge-cvc-wrap').innerHTML  = svgGaugeHTML('poster-gauge-cvc', 92, 9, '#4ade80');
+  document.getElementById('poster-gauge-ll-wrap').innerHTML   = svgGaugeHTML('poster-gauge-ll', 92, 9, '#4ade80');
+
+  let baseline = 0, latestRate = 0, totalCases = 0, totalDays = 0;
+  try{
+    const res = await fetch(CSV_URL + '&t=' + Date.now());
+    const rows = parseCSV(await res.text());
+    const monthly = [];
+    for(let i=11; i<=22 && i<rows.length; i++){
+      const r = rows[i]; if(!r[0] || r[0].toLowerCase().includes('jumlah')) break;
+      const k = parseFloat(r[6]);
+      monthly.push({ cases:parseInt(r[2])||0, days:parseInt(r[4])||0, kadar:isNaN(k)?0:+k.toFixed(2) });
+    }
+    totalCases = monthly.reduce((s,m)=>s+m.cases,0);
+    totalDays  = monthly.reduce((s,m)=>s+m.days,0);
+    const withData = monthly.filter(m=>m.days>0||m.kadar>0);
+    latestRate = withData.length ? withData[withData.length-1].kadar : 0;
+  }catch(e){ console.warn('poster CSV:', e); }
+
+  try{
+    const pg = await callGASGet('getProgramGoals');
+    if(pg && pg.success) baseline = pg.data.baselineRate || 0;
+  }catch(e){ console.warn('poster baseline:', e); }
+
+  let cvcAvg = 0;
+  try{
+    const r = await callGASGet('getComplianceData');
+    if(r && r.success){
+      const vals = [];
+      ['insertion','maintenance'].forEach(k=>{
+        Object.keys(r.data[k]).forEach(w => (r.data[k][w]||[]).forEach(v=>{ if(v>0) vals.push(v); }));
+      });
+      cvcAvg = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+    }
+  }catch(e){ console.warn('poster cvc:', e); }
+
+  let llAvg = 0;
+  try{
+    const r = await callGASGet('getLineListingData');
+    if(r && r.success){
+      const ll = r.data.lineListing;
+      const vals = [];
+      Object.keys(ll).forEach(w => (ll[w]||[]).forEach(v=>{ if(v!==null && v!==undefined) vals.push(v); }));
+      llAvg = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+    }
+  }catch(e){ console.warn('poster line listing:', e); }
+
+  const setTxt = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+  setTxt('poster-cases', totalCases);
+  setTxt('poster-days', totalDays.toLocaleString());
+
+  // Rate gauge: LOWER rate = MORE filled (0 rate → full ring), since
+  // the goal is minimising it. Scaled so 10/1000 or worse reads empty.
+  const declining = baseline>0 && latestRate < baseline;
+  let rateStatus, rateColor;
+  if(latestRate < 5)      { rateStatus='Good';              rateColor='#4ade80'; }
+  else if(latestRate<=10) { rateStatus='Needs Improvement'; rateColor='#fbbf24'; }
+  else                     { rateStatus='Critical';          rateColor='#f87171'; }
+  const rateFillPct = Math.max(0, 100 - (latestRate/10)*100);
+  setGaugeFill('poster-gauge-rate', 170, 15, rateFillPct, latestRate.toFixed(1));
+  document.getElementById('poster-gauge-rate-arc').style.stroke = rateColor;
+  setTxt('poster-rate-detail', baseline>0
+    ? `Rate/1000 cath days · baseline ${baseline.toFixed(1)} — ${declining?'trending down':'not yet improving'}`
+    : `Rate/1000 cath days · benchmark below 5.0`);
+
+  let cvcStatus, cvcColor;
+  if(cvcAvg>=80)      { cvcStatus='Good';              cvcColor='#4ade80'; }
+  else if(cvcAvg>=60) { cvcStatus='Needs Improvement'; cvcColor='#fbbf24'; }
+  else                 { cvcStatus='Critical';          cvcColor='#f87171'; }
+  setGaugeFill('poster-gauge-cvc', 92, 9, cvcAvg, cvcAvg.toFixed(0)+'%');
+  document.getElementById('poster-gauge-cvc-arc').style.stroke = cvcColor;
+
+  let llStatus, llColor;
+  if(llAvg>=90)      { llStatus='Good';              llColor='#4ade80'; }
+  else if(llAvg>=70) { llStatus='Needs Improvement'; llColor='#fbbf24'; }
+  else                { llStatus='Critical';          llColor='#f87171'; }
+  setGaugeFill('poster-gauge-ll', 92, 9, llAvg, llAvg.toFixed(0)+'%');
+  document.getElementById('poster-gauge-ll-arc').style.stroke = llColor;
+
+  // Recommendations — only the relevant ones, plus one foundational
+  // recommendation that's always safe/useful to reinforce.
+  const recs = [];
+  if(rateStatus !== 'Good'){
+    recs.push(posterRecChip(
+      'Reinforce the CVC Insertion Bundle',
+      'Maximal sterile barrier precautions and chlorhexidine (&gt;0.5% in alcohol) skin antisepsis for every insertion, with daily review of line necessity.',
+      'SHEA/IDSA/APIC Compendium 2022'
+    ));
+  }
+  if(cvcStatus !== 'Good'){
+    recs.push(posterRecChip(
+      'Strengthen Bundle Audit &amp; Feedback',
+      'Increase bundle audit frequency and share results with ward teams promptly.',
+      'CDC/NHSN; WHO Core Components for IPC'
+    ));
+  }
+  if(llStatus !== 'Good'){
+    recs.push(posterRecChip(
+      'Improve Surveillance Documentation',
+      'Assign a named person each shift to complete the CLABSI line listing promptly.',
+      'NHS High Impact Intervention'
+    ));
+  }
+  recs.push(posterRecChip(
+    'Sustain Hand Hygiene &amp; Hub Disinfection',
+    'Continue WHO "5 Moments" and scrub-the-hub disinfection before every catheter access.',
+    'WHO Hand Hygiene Guidelines'
+  ));
+  const recEl = document.getElementById('poster-recommendations');
+  if(recEl) recEl.innerHTML = recs.slice(0,3).join(''); // keep it to 3 so the landscape layout stays tidy
+}
+
+let HTML2CANVAS_LOADING = null;
+function loadHtml2Canvas(){
+  if (window.html2canvas) return Promise.resolve();
+  if (HTML2CANVAS_LOADING) return HTML2CANVAS_LOADING;
+  HTML2CANVAS_LOADING = new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    s.onload = ()=>resolve();
+    s.onerror = ()=>reject(new Error('Could not load the image export library — check your connection.'));
+    document.head.appendChild(s);
+  });
+  return HTML2CANVAS_LOADING;
+}
+
+async function downloadPoster(){
+  const btn = document.getElementById('poster-download-btn');
+  const original = btn.textContent;
+  btn.textContent = 'Preparing…'; btn.disabled = true;
+  try{
+    await loadHtml2Canvas();
+    const el = document.getElementById('poster-canvas');
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true });
+    const link = document.createElement('a');
+    link.download = 'CLABSI-Poster-' + new Date().toISOString().slice(0,10) + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }catch(e){
+    console.warn('poster download error:', e);
+    alert('Could not generate the image — please try again.');
+  }
+  btn.textContent = original; btn.disabled = false;
 }
 
 // ── UTILITIES ─────────────────────────────────────────────
