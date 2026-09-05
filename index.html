@@ -1589,6 +1589,7 @@ function trainingTableHTML(){
 function progressCardHTML(g){
   const isTraining = g.id === 'training';
   const isCvcBundle = g.id === 'cvc-bundle';
+  const isLineListing = g.id === 'line-listing';
   const currentBlockCvc = `
       <div class="pg-stat pg-current">
         <p class="pg-stat-label" style="color:#94a3b8;">Current</p>
@@ -1604,6 +1605,21 @@ function progressCardHTML(g){
         </div>
         <p class="pg-stat-sub" id="pg-sub-${g.id}" style="color:#94a3b8;margin-top:6px;"></p>
       </div>`;
+  const currentBlockLineListing = `
+      <div class="pg-stat pg-current">
+        <p class="pg-stat-label" style="color:#94a3b8;">Current</p>
+        <div class="pg-hbar-row">
+          <span class="pg-hbar-tag">Line Listing</span>
+          <div class="pg-hbar-track"><div class="pg-hbar-fill" id="pg-bar-ll-listing" style="background:#3b82f6;"></div></div>
+          <span class="pg-hbar-val" id="pg-cur-ll-listing">—</span>
+        </div>
+        <div class="pg-hbar-row">
+          <span class="pg-hbar-tag">Completeness</span>
+          <div class="pg-hbar-track"><div class="pg-hbar-fill" id="pg-bar-ll-complete" style="background:#8b5cf6;"></div></div>
+          <span class="pg-hbar-val" id="pg-cur-ll-complete">—</span>
+        </div>
+        <p class="pg-stat-sub" id="pg-sub-${g.id}" style="color:#94a3b8;margin-top:6px;"></p>
+      </div>`;
   const statsBlock = isTraining ? `
     <div style="display:flex;align-items:center;justify-content:space-between;background:${g.bg};border-radius:12px;padding:10px 14px;margin-top:14px;flex-wrap:wrap;gap:6px;">
       <span style="font-size:9px;font-weight:900;color:${g.color};text-transform:uppercase;letter-spacing:.08em;">Target</span>
@@ -1615,7 +1631,7 @@ function progressCardHTML(g){
         <p class="pg-stat-label" style="color:${g.color};">Target</p>
         <p class="pg-stat-value" style="color:${g.color};">${g.targetLabel}</p>
         <p class="pg-stat-sub" style="color:${g.color};opacity:.8;">${g.targetSub}</p>
-      </div>${isCvcBundle ? currentBlockCvc : `
+      </div>${isCvcBundle ? currentBlockCvc : isLineListing ? currentBlockLineListing : `
       <div class="pg-stat pg-current">
         <p class="pg-stat-label" style="color:#94a3b8;">Current</p>
         <p class="pg-stat-value" style="color:white;"><span id="pg-cur-${g.id}">—</span></p>
@@ -1743,16 +1759,31 @@ async function loadProgramGoals(){
       achieved1, barPct);
   }catch(e){ console.warn('program goals (clabsi rate):', e); }
 
-  // Goal 2: Line Listing Compliance average across months with data
+  // Goal 2: Line Listing Compliance + Completeness Data Entry — shown separately
   try{
     const r = await callGASGet('getLineListingData');
     if(r && r.success){
       const ll = r.data.lineListing;
-      const vals = [];
-      Object.keys(ll).forEach(w => (ll[w]||[]).forEach(v => { if(v!==null && v!==undefined) vals.push(v); }));
-      const avg = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+      const cd = r.data.completeness;
+      const llVals = [], cdVals = [];
+      Object.keys(ll).forEach(w => (ll[w]||[]).forEach(v => { if(v!==null && v!==undefined) llVals.push(v); }));
+      Object.keys(cd).forEach(w => (cd[w]||[]).forEach(v => { if(v!==null && v!==undefined) cdVals.push(v); }));
+      const llAvg = llVals.length ? llVals.reduce((a,b)=>a+b,0)/llVals.length : 0;
+      const cdAvg = cdVals.length ? cdVals.reduce((a,b)=>a+b,0)/cdVals.length : 0;
+      const combined = llVals.concat(cdVals);
+      const avg = combined.length ? combined.reduce((a,b)=>a+b,0)/combined.length : 0;
       const n = countMonthsWithData(ll);
-      updateProgressCard('line-listing', avg.toFixed(1)+'%', `(average for ${n} month${n===1?'':'s'})`,
+
+      const llEl = document.getElementById('pg-cur-ll-listing');
+      const cdEl = document.getElementById('pg-cur-ll-complete');
+      if(llEl) llEl.textContent = llAvg.toFixed(1)+'%';
+      if(cdEl) cdEl.textContent = cdAvg.toFixed(1)+'%';
+      const llBar = document.getElementById('pg-bar-ll-listing');
+      const cdBar = document.getElementById('pg-bar-ll-complete');
+      if(llBar) llBar.style.width = Math.max(0,Math.min(100,llAvg)) + '%';
+      if(cdBar) cdBar.style.width = Math.max(0,Math.min(100,cdAvg)) + '%';
+
+      updateProgressCard('line-listing', '', `(average for ${n} month${n===1?'':'s'})`,
         avg>=100, Math.min(100, avg));
     }
   }catch(e){ console.warn('program goals (line listing):', e); }
