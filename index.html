@@ -321,13 +321,12 @@ function enterDashboard() {
   .pg-multi-row{display:flex;flex-direction:column;gap:6px;margin-top:2px;}
   .pg-multi-item{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:900;color:white;}
   .pg-multi-tag{font-size:9px;font-weight:900;color:#94a3b8;background:#1e293b;padding:2px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:.05em;}
-  .pg-vbars2{display:flex;align-items:flex-end;justify-content:center;gap:28px;margin-top:8px;}
-  .pg-vbar2-col{display:flex;flex-direction:column;align-items:center;}
-  .pg-vbar2-value{font-size:12px;font-weight:900;color:white;margin-bottom:6px;}
-  .pg-vbar2-track{position:relative;width:32px;height:90px;background:rgba(255,255,255,.08);border-radius:8px;overflow:hidden;}
-  .pg-vbar2-fill{position:absolute;left:0;bottom:0;width:100%;height:0%;border-radius:8px 8px 0 0;transition:height .6s;}
-  .pg-vbar2-target-line{position:absolute;left:-8px;right:-8px;bottom:80%;border-top:2px dashed rgba(250,204,21,.85);z-index:2;}
-  .pg-vbar2-tag{font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-top:6px;}
+  .pg-hbar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+  .pg-hbar-tag{font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;width:78px;flex-shrink:0;}
+  .pg-hbar-track{position:relative;flex:1;height:10px;background:rgba(255,255,255,.1);border-radius:99px;overflow:visible;}
+  .pg-hbar-fill{height:100%;width:0%;border-radius:99px;transition:width .6s;overflow:hidden;}
+  .pg-hbar-target-line{position:absolute;top:-4px;bottom:-4px;left:80%;border-left:2px dashed rgba(250,204,21,.9);z-index:2;}
+  .pg-hbar-val{font-size:11px;font-weight:900;color:white;width:40px;text-align:right;flex-shrink:0;}
   .pg-training-table-wrap{overflow-x:auto;margin:14px 0 10px;}
   .pg-training-table{width:100%;border-collapse:collapse;font-size:11px;}
   .pg-training-table thead th{text-align:left;font-size:9px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;padding:4px 8px 6px;border-bottom:1px solid #e2e8f0;}
@@ -1593,19 +1592,17 @@ function progressCardHTML(g){
   const currentBlockCvc = `
       <div class="pg-stat pg-current">
         <p class="pg-stat-label" style="color:#94a3b8;">Current</p>
-        <div class="pg-vbars2">
-          <div class="pg-vbar2-col">
-            <span class="pg-vbar2-value" id="pg-cur-cvc-ins">—</span>
-            <div class="pg-vbar2-track"><div class="pg-vbar2-target-line"></div><div class="pg-vbar2-fill" id="pg-bar-cvc-ins" style="background:#3b82f6;"></div></div>
-            <span class="pg-vbar2-tag">Insertion</span>
-          </div>
-          <div class="pg-vbar2-col">
-            <span class="pg-vbar2-value" id="pg-cur-cvc-mnt">—</span>
-            <div class="pg-vbar2-track"><div class="pg-vbar2-target-line"></div><div class="pg-vbar2-fill" id="pg-bar-cvc-mnt" style="background:#22c55e;"></div></div>
-            <span class="pg-vbar2-tag">Maintenance</span>
-          </div>
+        <div class="pg-hbar-row">
+          <span class="pg-hbar-tag">Insertion</span>
+          <div class="pg-hbar-track"><div class="pg-hbar-target-line"></div><div class="pg-hbar-fill" id="pg-bar-cvc-ins" style="background:#3b82f6;"></div></div>
+          <span class="pg-hbar-val" id="pg-cur-cvc-ins">—</span>
         </div>
-        <p class="pg-stat-sub" id="pg-sub-${g.id}" style="color:#94a3b8;margin-top:8px;"></p>
+        <div class="pg-hbar-row">
+          <span class="pg-hbar-tag">Maintenance</span>
+          <div class="pg-hbar-track"><div class="pg-hbar-target-line"></div><div class="pg-hbar-fill" id="pg-bar-cvc-mnt" style="background:#22c55e;"></div></div>
+          <span class="pg-hbar-val" id="pg-cur-cvc-mnt">—</span>
+        </div>
+        <p class="pg-stat-sub" id="pg-sub-${g.id}" style="color:#94a3b8;margin-top:6px;"></p>
       </div>`;
   const statsBlock = isTraining ? `
     <div style="display:flex;align-items:center;justify-content:space-between;background:${g.bg};border-radius:12px;padding:10px 14px;margin-top:14px;flex-wrap:wrap;gap:6px;">
@@ -1778,8 +1775,8 @@ async function loadProgramGoals(){
       if(mntEl) mntEl.textContent = mntAvg.toFixed(1)+'%';
       const insBar = document.getElementById('pg-bar-cvc-ins');
       const mntBar = document.getElementById('pg-bar-cvc-mnt');
-      if(insBar) insBar.style.height = Math.max(0,Math.min(100,insAvg)) + '%';
-      if(mntBar) mntBar.style.height = Math.max(0,Math.min(100,mntAvg)) + '%';
+      if(insBar) insBar.style.width = Math.max(0,Math.min(100,insAvg)) + '%';
+      if(mntBar) mntBar.style.width = Math.max(0,Math.min(100,mntAvg)) + '%';
 
       updateProgressCard('cvc-bundle', '', `(average for ${n} month${n===1?'':'s'})`,
         avg>=80, Math.min(100,(avg/80)*100));
