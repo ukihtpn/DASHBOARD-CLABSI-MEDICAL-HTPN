@@ -1582,6 +1582,16 @@ function trainingTableHTML(){
 
 function progressCardHTML(g){
   const isTraining = g.id === 'training';
+  const isCvcBundle = g.id === 'cvc-bundle';
+  const currentBlockCvc = `
+      <div class="pg-stat pg-current">
+        <p class="pg-stat-label" style="color:#94a3b8;">Current</p>
+        <div class="pg-multi-row">
+          <div class="pg-multi-item"><span class="pg-multi-tag">Insertion</span><span id="pg-cur-cvc-ins">—</span></div>
+          <div class="pg-multi-item"><span class="pg-multi-tag">Maintenance</span><span id="pg-cur-cvc-mnt">—</span></div>
+        </div>
+        <p class="pg-stat-sub" id="pg-sub-${g.id}" style="color:#94a3b8;margin-top:6px;"></p>
+      </div>`;
   const statsBlock = isTraining ? `
     <div style="display:flex;align-items:center;justify-content:space-between;background:${g.bg};border-radius:12px;padding:10px 14px;margin-top:14px;flex-wrap:wrap;gap:6px;">
       <span style="font-size:9px;font-weight:900;color:${g.color};text-transform:uppercase;letter-spacing:.08em;">Target</span>
@@ -1593,12 +1603,12 @@ function progressCardHTML(g){
         <p class="pg-stat-label" style="color:${g.color};">Target</p>
         <p class="pg-stat-value" style="color:${g.color};">${g.targetLabel}</p>
         <p class="pg-stat-sub" style="color:${g.color};opacity:.8;">${g.targetSub}</p>
-      </div>
+      </div>${isCvcBundle ? currentBlockCvc : `
       <div class="pg-stat pg-current">
         <p class="pg-stat-label" style="color:#94a3b8;">Current</p>
         <p class="pg-stat-value" style="color:white;"><span id="pg-cur-${g.id}">—</span></p>
         <p class="pg-stat-sub" id="pg-sub-${g.id}" style="color:#94a3b8;"></p>
-      </div>
+      </div>`}
     </div>`;
   return `
   <div class="pg-card">
@@ -1735,17 +1745,24 @@ async function loadProgramGoals(){
     }
   }catch(e){ console.warn('program goals (line listing):', e); }
 
-  // Goal 3: CVC Insertion + Maintenance bundle average across months with data
+  // Goal 3: CVC Insertion & Maintenance bundle — shown separately
   try{
     const r = await callGASGet('getComplianceData');
     if(r && r.success){
-      const vals = [];
-      ['insertion','maintenance'].forEach(k=>{
-        Object.keys(r.data[k]).forEach(w => (r.data[k][w]||[]).forEach(v => { if(v>0) vals.push(v); }));
-      });
-      const avg = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+      const insVals = [], mntVals = [];
+      Object.keys(r.data.insertion).forEach(w => (r.data.insertion[w]||[]).forEach(v => { if(v>0) insVals.push(v); }));
+      Object.keys(r.data.maintenance).forEach(w => (r.data.maintenance[w]||[]).forEach(v => { if(v>0) mntVals.push(v); }));
+      const insAvg = insVals.length ? insVals.reduce((a,b)=>a+b,0)/insVals.length : 0;
+      const mntAvg = mntVals.length ? mntVals.reduce((a,b)=>a+b,0)/mntVals.length : 0;
+      const avg = (insVals.length+mntVals.length) ? (insVals.concat(mntVals)).reduce((a,b)=>a+b,0)/(insVals.length+mntVals.length) : 0;
       const n = countMonthsWithData(r.data.insertion);
-      updateProgressCard('cvc-bundle', avg.toFixed(1)+'%', `(average for ${n} month${n===1?'':'s'})`,
+
+      const insEl = document.getElementById('pg-cur-cvc-ins');
+      const mntEl = document.getElementById('pg-cur-cvc-mnt');
+      if(insEl) insEl.textContent = insAvg.toFixed(1)+'%';
+      if(mntEl) mntEl.textContent = mntAvg.toFixed(1)+'%';
+
+      updateProgressCard('cvc-bundle', '', `(average for ${n} month${n===1?'':'s'})`,
         avg>=80, Math.min(100,(avg/80)*100));
     }
   }catch(e){ console.warn('program goals (cvc bundle):', e); }
